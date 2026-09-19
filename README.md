@@ -5,8 +5,9 @@ walkthrough video, and exported LiDAR data. The long-term goal is a stitched 2D
 floor plan, room dimensions, wall lengths, floor area, ceiling height, openings,
 visible damage, repair/scope items, confidence intervals, and structured JSON.
 
-**Current status: foundation, unified data contract, and a core point-cloud
-geometry engine. Reconstruction and AI processing are not implemented yet.**
+**Current status: foundation, unified data contract, core point-cloud geometry,
+and a dimensioned PNG/SVG floor-plan renderer. Reconstruction and AI processing
+are not implemented yet.**
 The capture CLI remains preparation-only. A separate development command can
 measure an already reconstructed metric single-room `.ply`/`.pcd` cloud.
 Validated result objects can be saved/loaded as JSON and the schema exported.
@@ -23,8 +24,9 @@ LiDAR ───┘
 ```
 
 All inputs share `PropertyScanPipeline`. Only adapters inspect the input tier.
-Capture pipeline stages remain explicit `NotImplementedError` extension points;
-geometry has a working standalone `process_point_cloud()` entry point.
+The capture pipeline stops at unimplemented reconstruction. Geometry has a
+working standalone `process_point_cloud()` entry point; rendering consumes
+supplied room/property geometry through `render_room()` and `render_property()`.
 See [docs/architecture.md](docs/architecture.md) for boundaries and future work.
 
 ## Setup
@@ -125,8 +127,9 @@ network requests.
    now works; reconstruction, scale recovery, stitching, and openings remain future work.
 5. **Analysis:** visible damage, repair/scope items, measurements, and validated
    confidence intervals.
-6. **Outputs and evaluation:** populate the existing unified result contract from
-   real processing, add a 2D floor plan renderer, benchmarking, and eventually a UI.
+6. **Outputs (partially implemented):** JSON serialization and dimensioned PNG/SVG
+   rendering work for supplied geometry. Capture-pipeline integration, benchmarking,
+   and a UI remain future work.
 
 No COLMAP, depth estimation, LiDAR fusion, capture reconstruction, AI models,
 Streamlit, benchmarking, database, authentication, mobile app, or Docker is
@@ -148,12 +151,37 @@ The generated cloud is explicitly synthetic test data. For your own metric cloud
 replace the input path. The engine detects floor/ceiling/wall planes, intersects
 bounded wall lines, and reports a supported room polygon, wall lengths, floor
 area, and ceiling height. Missing ceiling or polygon evidence stays unavailable.
-Debug PNG and cloud exports are optional; no final floor-plan renderer is added.
+Debug PNG and cloud exports are optional and remain separate from the dimensioned
+floor-plan renderer below.
 
 See [docs/geometry_engine.md](docs/geometry_engine.md) for coordinates, all
 configuration defaults, diagnostic definitions, failure behavior, and limitations.
 Open3D/NumPy/Shapely/matplotlib are installed by the geometry extra, not required
 for the original preparation CLI. Geometry tests require that extra.
+
+## Dimensioned floor plans
+
+Render typed geometry with local Matplotlib/Shapely/NumPy; Open3D is not required:
+
+```bash
+python -m pip install -e '.[dev,rendering]'
+python scripts/render_sample_floorplan.py
+```
+
+The explicitly synthetic sample writes `outputs/sample_floorplan/floorplan.png`
+and `floorplan.svg`. To render a geometry-engine result:
+
+```bash
+python scripts/render_floorplan.py --input outputs/<capture_id>/diagnostics/geometry/geometry.json --output-dir outputs/<capture_id>
+```
+
+Features include equal metric proportions, supplied wall dimensions, room/area/
+ceiling labels, known door/window/passage gaps, scale bar, legend, and optional
+supplied confidence bounds, overall extents, and north direction. No measurements,
+door swings, or room positions are inferred. Missing ceiling height is shown as
+unavailable. See [docs/floorplan_renderer.md](docs/floorplan_renderer.md) for API,
+styling, validation, and limitations. Full tests including geometry require
+`python -m pip install -e '.[dev,geometry,rendering]'`.
 
 ## Unified JSON contract
 

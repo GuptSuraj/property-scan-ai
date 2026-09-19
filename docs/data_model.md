@@ -208,8 +208,10 @@ automatically trusted or interpreted by core consumers.
 `PropertyScanPipeline.process()` now returns `PropertyScanResult` in its type
 contract for every tier. `ScanContext.result` is initially `None`, enabling future
 stages to pass an actual result to downstream consumers without inventing one.
-All stage implementations still raise `NotImplementedError`, including
-reconstruction and rendering. The CLI still only prepares a capture and creates
+Acquisition-dependent stage implementations still raise `NotImplementedError`,
+including reconstruction. Geometry now has a standalone point-cloud entry point;
+the renderer consumes supplied geometry and can export a real context result.
+See [floorplan_renderer.md](floorplan_renderer.md). The capture CLI still only prepares a capture and creates
 an empty output directory. Result serialization is an explicit utility, not a
 new processing path. The sole sample fixture is marked synthetic at root level,
 in a structured warning, and in observation notes.

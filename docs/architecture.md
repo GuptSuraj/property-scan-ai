@@ -30,11 +30,14 @@ no JSON or processing output.
 `PropertyScanPipeline.process(prepared)` defines the shared stage order:
 reconstruction, geometry, stitching, openings, damage, measurements, confidence,
 and rendering. It currently raises `NotImplementedError` at reconstruction.
-Every capture stage still raises through its `run()` interface. The geometry
+Acquisition-dependent stages still raise through their `run()` interfaces. The geometry
 module now also provides a standalone `process_point_cloud()` entry point for
 already reconstructed metric clouds; see [geometry_engine.md](geometry_engine.md).
 It returns a typed `RoomGeometryResult` and can convert known measurements to
-the existing `Room` schema. No empty geometry,
+the existing `Room` schema. The floor-plan renderer now consumes supplied
+`RoomGeometryResult`, `Room`, or positioned `PropertyGeometry` and exports PNG/SVG;
+see [floorplan_renderer.md](floorplan_renderer.md). Its stage adapter requires a
+real `ScanContext.result`, and otherwise raises. No empty geometry,
 zero-valued measurements, or arbitrary confidence scores stand in for real work.
 
 The CLI calls only `prepare()`. Exit code 0 reports successful preparation;
@@ -53,7 +56,7 @@ package import or settings load.
 | Semantic analysis (`openings/`, `damage/`) | Future doors/windows/openings, visible damage regions, repair/scope suggestions | Invented dimensions or unsupported hidden damage |
 | Measurement (`measurements/`) | Future physical quantities derived from scaled geometry | UI formatting or sensor-specific decoding |
 | Confidence (`confidence/`) | Future uncertainty and provenance based on actual evidence | Arbitrary fixed confidence values |
-| Rendering (`rendering/`) | Future 2D presentation of the unified result | Estimating missing geometry |
+| Rendering (`rendering/`) | Implemented dimensioned PNG/SVG from supplied room/property geometry, openings, and measurements | Estimating missing geometry, stitching, or detection |
 
 `schemas/common.py` owns capture-preparation and receipt contracts; the other
 `schemas/` modules own the versioned unified output contract. `core/`
@@ -94,8 +97,8 @@ every tier, but still raises at reconstruction. Even if all stage placeholders
 are bypassed, missing result assembly raises rather than returning fake data.
 
 Future stages will assemble the result after confidence estimation and before
-rendering, which will consume that same model rather than calculating its own
-dimensions. JSON export currently serializes only supplied, validated objects;
+rendering. The renderer already consumes that same geometry model without
+calculating wall lengths, area, or ceiling height. JSON export serializes only supplied, validated objects;
 it does not perform analysis. A preparation receipt remains a separate type and
 must never be mistaken for a property scan result.
 

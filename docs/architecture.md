@@ -30,7 +30,11 @@ no JSON or processing output.
 `PropertyScanPipeline.process(prepared)` defines the shared stage order:
 reconstruction, geometry, stitching, openings, damage, measurements, confidence,
 and rendering. It currently raises `NotImplementedError` at reconstruction.
-Every other stage also raises if called independently. No empty geometry,
+Every capture stage still raises through its `run()` interface. The geometry
+module now also provides a standalone `process_point_cloud()` entry point for
+already reconstructed metric clouds; see [geometry_engine.md](geometry_engine.md).
+It returns a typed `RoomGeometryResult` and can convert known measurements to
+the existing `Room` schema. No empty geometry,
 zero-valued measurements, or arbitrary confidence scores stand in for real work.
 
 The CLI calls only `prepare()`. Exit code 0 reports successful preparation;
@@ -44,7 +48,7 @@ package import or settings load.
 | --- | --- | --- |
 | Acquisition (`inputs/`) | Discovery, format validation, future decoding/frame selection and calibration loading | Floor areas, damage, or rendering |
 | Reconstruction (`reconstruction/`) | Future observations/poses/depth to a common scene, including scale provenance | Repair scope or display formatting |
-| Geometry (`geometry/`) | Future walls, floors, ceilings, room surfaces and topology | Input codec logic |
+| Geometry (`geometry/`) | Implemented single-room point-cloud planes, wall intersections, polygons and metric measurements | Capture codecs, reconstruction, stitching |
 | Stitching (`stitching/`) | Future inter-room transforms and property coordinate alignment | Independent copies of measurement logic |
 | Semantic analysis (`openings/`, `damage/`) | Future doors/windows/openings, visible damage regions, repair/scope suggestions | Invented dimensions or unsupported hidden damage |
 | Measurement (`measurements/`) | Future physical quantities derived from scaled geometry | UI formatting or sensor-specific decoding |
@@ -98,5 +102,6 @@ must never be mistaken for a property scan result.
 This approach keeps input formats isolated while sharing all downstream rules.
 Future backends can be swapped independently without duplicating a complete app
 for each acquisition mode. CPU and Apple MPS implementations can be evaluated
-per stage within a local-first, 16 GB memory budget; nothing currently requires
-a GPU or loads model weights.
+per stage within a local-first, 16 GB memory budget. Geometry uses optional,
+lazily loaded CPU Open3D, NumPy, Shapely, and matplotlib; nothing requires a GPU
+or loads model weights.

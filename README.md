@@ -5,10 +5,11 @@ walkthrough video, and exported LiDAR data. The long-term goal is a stitched 2D
 floor plan, room dimensions, wall lengths, floor area, ceiling height, openings,
 visible damage, repair/scope items, confidence intervals, and structured JSON.
 
-**Current status: project foundation and unified data contract. Reconstruction
-and AI processing are not implemented yet.** The CLI generates no measurements,
-damage findings, floor plans, or scan JSON. Validated result objects can now be
-saved/loaded as JSON, and the official JSON Schema can be exported.
+**Current status: foundation, unified data contract, and a core point-cloud
+geometry engine. Reconstruction and AI processing are not implemented yet.**
+The capture CLI remains preparation-only. A separate development command can
+measure an already reconstructed metric single-room `.ply`/`.pcd` cloud.
+Validated result objects can be saved/loaded as JSON and the schema exported.
 
 ## Architecture
 
@@ -22,7 +23,8 @@ LiDAR ───┘
 ```
 
 All inputs share `PropertyScanPipeline`. Only adapters inspect the input tier.
-The downstream stages are explicit `NotImplementedError` extension points.
+Capture pipeline stages remain explicit `NotImplementedError` extension points;
+geometry has a working standalone `process_point_cloud()` entry point.
 See [docs/architecture.md](docs/architecture.md) for boundaries and future work.
 
 ## Setup
@@ -119,16 +121,39 @@ network requests.
    and a documented LiDAR interchange format.
 3. **Reconstruction:** real scene reconstruction and sensor-specific backends
    behind shared interfaces, with local CPU/MPS feasibility evaluated first.
-4. **Geometry:** room surfaces, coordinates/scale, stitching, and openings.
+4. **Geometry (partially implemented):** single-room metric point-cloud geometry
+   now works; reconstruction, scale recovery, stitching, and openings remain future work.
 5. **Analysis:** visible damage, repair/scope items, measurements, and validated
    confidence intervals.
 6. **Outputs and evaluation:** populate the existing unified result contract from
    real processing, add a 2D floor plan renderer, benchmarking, and eventually a UI.
 
-No COLMAP, depth estimation, LiDAR fusion, geometry reconstruction, AI models,
+No COLMAP, depth estimation, LiDAR fusion, capture reconstruction, AI models,
 Streamlit, benchmarking, database, authentication, mobile app, or Docker is
 included. There are no model weights and no automatic model downloads. Large
 scientific/AI dependencies will be added only when a concrete stage needs them.
+
+## Core geometry engine
+
+Install the optional CPU geometry dependencies and run the development command:
+
+```bash
+python -m pip install -e '.[dev,geometry]'
+python -m tests.synthetic_geometry --output inputs/synthetic_room.ply
+python scripts/test_geometry.py --input inputs/synthetic_room.ply --diagnostics
+pytest
+```
+
+The generated cloud is explicitly synthetic test data. For your own metric cloud,
+replace the input path. The engine detects floor/ceiling/wall planes, intersects
+bounded wall lines, and reports a supported room polygon, wall lengths, floor
+area, and ceiling height. Missing ceiling or polygon evidence stays unavailable.
+Debug PNG and cloud exports are optional; no final floor-plan renderer is added.
+
+See [docs/geometry_engine.md](docs/geometry_engine.md) for coordinates, all
+configuration defaults, diagnostic definitions, failure behavior, and limitations.
+Open3D/NumPy/Shapely/matplotlib are installed by the geometry extra, not required
+for the original preparation CLI. Geometry tests require that extra.
 
 ## Unified JSON contract
 

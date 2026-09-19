@@ -15,6 +15,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+geometry = ["open3d>=0.18,<0.20", "numpy>=1.26,<3", "shapely>=2,<3", "matplotlib>=3.8,<4"]
 dev = ["pytest>=8,<10", "jsonschema>=4.20,<5"]
 
 [project.scripts]

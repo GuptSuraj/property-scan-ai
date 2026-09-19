@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Protocol
 
 from property_scanner.schemas.common import NormalizedCapture
+from property_scanner.schemas.result import PropertyScanResult
 
 
 @dataclass
@@ -18,6 +19,7 @@ class ScanContext:
     capture: NormalizedCapture
     output_dir: Path
     artifacts: dict[str, Path] = field(default_factory=dict)
+    result: PropertyScanResult | None = None
 
 
 class ProcessingStage(Protocol):

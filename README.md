@@ -5,9 +5,10 @@ walkthrough video, and exported LiDAR data. The long-term goal is a stitched 2D
 floor plan, room dimensions, wall lengths, floor area, ceiling height, openings,
 visible damage, repair/scope items, confidence intervals, and structured JSON.
 
-**Current status: foundation only. Reconstruction and AI processing are not
-implemented yet.** No measurements, damage findings, floor plans, or scan JSON
-are generated.
+**Current status: project foundation and unified data contract. Reconstruction
+and AI processing are not implemented yet.** The CLI generates no measurements,
+damage findings, floor plans, or scan JSON. Validated result objects can now be
+saved/loaded as JSON, and the official JSON Schema can be exported.
 
 ## Architecture
 
@@ -37,7 +38,8 @@ python -m pip install -r requirements.txt
 cp .env.example .env
 ```
 
-`requirements.txt` installs this project in editable mode with pytest.
+`requirements.txt` installs this project in editable mode with pytest and
+jsonschema (used only to test the generated contract).
 For runtime dependencies only, use `python -m pip install -e .`.
 Dependencies are declared once in `pyproject.toml`: Pydantic, pydantic-settings,
 and python-dotenv. The CLI uses standard-library argparse.
@@ -102,7 +104,8 @@ python scripts/download_models.py
 ```
 
 Tests cover imports, all adapters, file/type validation, settings, unique output
-allocation, explicit unimplemented stages, and the CLI via subprocesses. They
+allocation, explicit unimplemented stages, the CLI via subprocesses, data model
+constraints, references, JSON round trips, and generated JSON Schema. They
 use temporary path fixtures, not real reconstruction datasets. The download
 script only explains that model downloading is not implemented; it makes no
 network requests.
@@ -110,7 +113,8 @@ network requests.
 ## Limitations and planned phases
 
 1. **Foundation (current):** package/configuration, adapters, shared stage
-   interfaces, preparation CLI, logging, errors, and startup tests.
+   interfaces, preparation CLI, logging, errors, startup tests, and a versioned
+   unified result contract with JSON serialization and schema validation tests.
 2. **Acquisition:** actual decoding, media quality checks, multi-room manifests,
    and a documented LiDAR interchange format.
 3. **Reconstruction:** real scene reconstruction and sensor-specific backends
@@ -118,10 +122,30 @@ network requests.
 4. **Geometry:** room surfaces, coordinates/scale, stitching, and openings.
 5. **Analysis:** visible damage, repair/scope items, measurements, and validated
    confidence intervals.
-6. **Outputs and evaluation:** a versioned unified domain result schema, JSON
-   exporter, 2D floor plan renderer, benchmarking, and eventually a UI.
+6. **Outputs and evaluation:** populate the existing unified result contract from
+   real processing, add a 2D floor plan renderer, benchmarking, and eventually a UI.
 
 No COLMAP, depth estimation, LiDAR fusion, geometry reconstruction, AI models,
 Streamlit, benchmarking, database, authentication, mobile app, or Docker is
 included. There are no model weights and no automatic model downloads. Large
 scientific/AI dependencies will be added only when a concrete stage needs them.
+
+## Unified JSON contract
+
+All three input modes share `PropertyScanResult` schema version `1.0.0`.
+See [docs/data_model.md](docs/data_model.md) for fields, units, IDs/references,
+partial results, serialization utilities, and validation rules.
+
+Regenerate the schema directly from the Pydantic root model:
+
+```bash
+python scripts/export_schema.py
+```
+
+This writes `schemas/property_scan_result.schema.json`. Do not edit that generated
+file manually. Cross-field and reference validation requires the Pydantic model;
+JSON Schema alone cannot enforce those relationships.
+
+`tests/fixtures/sample_property_result.json` is **entirely synthetic schema test
+data**, not a real property scan or AI result. It is the only sample result.
+The CLI does not load this fixture or generate an example scan.

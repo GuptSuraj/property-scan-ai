@@ -1,0 +1,424 @@
+{
+  "schema_version": "1.0.0",
+  "capture": {
+    "capture_id": "00000000-0000-4000-8000-000000000001",
+    "tier": "photo",
+    "source_type": "directory",
+    "source_reference": "synthetic://schema-test/photos",
+    "metadata": {
+      "synthetic": true
+    }
+  },
+  "property": {
+    "property_id": "property_synthetic",
+    "rooms": [
+      {
+        "room_id": "room_01",
+        "name": "Living room",
+        "room_type": "living_room",
+        "polygon": {
+          "points": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 0
+            },
+            {
+              "x": 4,
+              "y": 3
+            },
+            {
+              "x": 0,
+              "y": 3
+            }
+          ]
+        },
+        "floor": {
+          "surface_id": "floor_01",
+          "polygon": {
+            "points": [
+              {
+                "x": 0,
+                "y": 0
+              },
+              {
+                "x": 4,
+                "y": 0
+              },
+              {
+                "x": 4,
+                "y": 3
+              },
+              {
+                "x": 0,
+                "y": 3
+              }
+            ]
+          },
+          "area": {
+            "value": 12,
+            "unit": "m2"
+          }
+        },
+        "ceiling": {
+          "surface_id": "ceiling_01",
+          "height": {
+            "value": 2.7,
+            "unit": "m"
+          },
+          "area": {
+            "value": 12,
+            "unit": "m2"
+          }
+        },
+        "walls": [
+          {
+            "wall_id": "wall_1_1",
+            "room_id": "room_01",
+            "start_point": {
+              "x": 0,
+              "y": 0
+            },
+            "end_point": {
+              "x": 4,
+              "y": 0
+            },
+            "length": {
+              "value": 4,
+              "unit": "m"
+            },
+            "height": {
+              "value": 2.7,
+              "unit": "m"
+            },
+            "damage_ids": [
+              "damage_01"
+            ]
+          },
+          {
+            "wall_id": "wall_1_2",
+            "room_id": "room_01",
+            "start_point": {
+              "x": 4,
+              "y": 0
+            },
+            "end_point": {
+              "x": 4,
+              "y": 3
+            },
+            "length": {
+              "value": 3,
+              "unit": "m"
+            },
+            "height": {
+              "value": 2.7,
+              "unit": "m"
+            },
+            "opening_ids": [
+              "opening_01"
+            ]
+          },
+          {
+            "wall_id": "wall_1_3",
+            "room_id": "room_01",
+            "start_point": {
+              "x": 4,
+              "y": 3
+            },
+            "end_point": {
+              "x": 0,
+              "y": 3
+            },
+            "length": {
+              "value": 4,
+              "unit": "m"
+            },
+            "height": {
+              "value": 2.7,
+              "unit": "m"
+            }
+          },
+          {
+            "wall_id": "wall_1_4",
+            "room_id": "room_01",
+            "start_point": {
+              "x": 0,
+              "y": 3
+            },
+            "end_point": {
+              "x": 0,
+              "y": 0
+            },
+            "length": {
+              "value": 3,
+              "unit": "m"
+            },
+            "height": {
+              "value": 2.7,
+              "unit": "m"
+            }
+          }
+        ],
+        "opening_ids": [
+          "opening_01"
+        ],
+        "damage_ids": [
+          "damage_01"
+        ]
+      },
+      {
+        "room_id": "room_02",
+        "name": "Bedroom",
+        "room_type": "bedroom",
+        "polygon": {
+          "points": [
+            {
+              "x": 4,
+              "y": 0
+            },
+            {
+              "x": 8,
+              "y": 0
+            },
+            {
+              "x": 8,
+              "y": 3
+            },
+            {
+              "x": 4,
+              "y": 3
+            }
+          ]
+        },
+        "floor": {
+          "surface_id": "floor_02",
+          "polygon": {
+            "points": [
+              {
+                "x": 4,
+                "y": 0
+              },
+              {
+                "x": 8,
+                "y": 0
+              },
+              {
+                "x": 8,
+                "y": 3
+              },
+              {
+                "x": 4,
+                "y": 3
+              }
+            ]
+          },
+          "area": {
+            "value": 12,
+            "unit": "m2"
+          }
+        },
+        "ceiling": {
+          "surface_id": "ceiling_02",
+          "height": {
+            "value": 2.7,
+            "unit": "m"
+          },
+          "area": {
+            "value": 12,
+            "unit": "m2"
+          }
+        },
+        "walls": [
+          {
+            "wall_id": "wall_2_1",
+            "room_id": "room_02",
+            "start_point": {
+              "x": 4,
+              "y": 0
+            },
+            "end_point": {
+              "x": 8,
+              "y": 0
+            },
+            "length": {
+              "value": 4,
+              "unit": "m"
+            },
+            "height": {
+              "value": 2.7,
+              "unit": "m"
+            }
+          },
+          {
+            "wall_id": "wall_2_2",
+            "room_id": "room_02",
+            "start_point": {
+              "x": 8,
+              "y": 0
+            },
+            "end_point": {
+              "x": 8,
+              "y": 3
+            },
+            "length": {
+              "value": 3,
+              "unit": "m"
+            },
+            "height": {
+              "value": 2.7,
+              "unit": "m"
+            }
+          },
+          {
+            "wall_id": "wall_2_3",
+            "room_id": "room_02",
+            "start_point": {
+              "x": 8,
+              "y": 3
+            },
+            "end_point": {
+              "x": 4,
+              "y": 3
+            },
+            "length": {
+              "value": 4,
+              "unit": "m"
+            },
+            "height": {
+              "value": 2.7,
+              "unit": "m"
+            }
+          },
+          {
+            "wall_id": "wall_2_4",
+            "room_id": "room_02",
+            "start_point": {
+              "x": 4,
+              "y": 3
+            },
+            "end_point": {
+              "x": 4,
+              "y": 0
+            },
+            "length": {
+              "value": 3,
+              "unit": "m"
+            },
+            "height": {
+              "value": 2.7,
+              "unit": "m"
+            },
+            "opening_ids": [
+              "opening_01"
+            ]
+          }
+        ],
+        "opening_ids": [
+          "opening_01"
+        ]
+      }
+    ],
+    "openings": [
+      {
+        "opening_id": "opening_01",
+        "type": "door",
+        "wall_id": "wall_1_2",
+        "room_ids": [
+          "room_01",
+          "room_02"
+        ],
+        "width": {
+          "value": 0.9,
+          "unit": "m"
+        },
+        "height": {
+          "value": 2.1,
+          "unit": "m"
+        },
+        "sill_height": {
+          "value": 0,
+          "unit": "m"
+        },
+        "position_along_wall": {
+          "value": 1,
+          "unit": "m"
+        }
+      }
+    ],
+    "room_connections": [
+      {
+        "connection_id": "connection_01",
+        "room_a_id": "room_01",
+        "room_b_id": "room_02",
+        "opening_id": "opening_01",
+        "connection_type": "door"
+      }
+    ],
+    "total_floor_area": {
+      "value": 24,
+      "unit": "m2"
+    }
+  },
+  "damages": [
+    {
+      "damage_id": "damage_01",
+      "damage_type": "moisture_stain",
+      "surface_id": "wall_1_1",
+      "room_id": "room_01",
+      "metric_area": {
+        "value": 0.4,
+        "unit": "m2",
+        "lower_bound": 0.3,
+        "upper_bound": 0.5,
+        "confidence_level": 0.95,
+        "method": "synthetic_fixture_only"
+      },
+      "severity": "minor",
+      "notes": "SYNTHETIC schema fixture observation; not detected damage.",
+      "source_frames": [
+        "synthetic://schema-test/frame_01"
+      ]
+    }
+  ],
+  "concealed_damage_flags": [
+    {
+      "flag_id": "flag_01",
+      "room_id": "room_01",
+      "surface_id": "wall_1_1",
+      "suspected_damage_type": "water_damage",
+      "rule_id": "synthetic_moisture_rule",
+      "rule_description": "Synthetic example rule explanation only; no rule engine was executed.",
+      "evidence": [
+        "Synthetic example moisture stain damage_01; not real evidence."
+      ]
+    }
+  ],
+  "scope_line_items": [
+    {
+      "line_item_id": "scope_01",
+      "room_id": "room_01",
+      "surface_id": "wall_1_1",
+      "damage_id": "damage_01",
+      "action": "inspect_surface",
+      "description": "SYNTHETIC example scope item; not a real repair recommendation.",
+      "quantity": {
+        "value": 1,
+        "unit": "item"
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "code": "SYNTHETIC_FIXTURE",
+      "message": "Entirely synthetic schema-testing data. Not a real scan, estimate, or AI output."
+    }
+  ],
+  "processing_info": null,
+  "metadata": {
+    "synthetic": true,
+    "purpose": "Schema testing only. All geometry and measurements are invented fixture values."
+  }
+}

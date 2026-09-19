@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<10"]
+dev = ["pytest>=8,<10", "jsonschema>=4.20,<5"]
 
 [project.scripts]
 property-scan = "property_scanner.cli:main"

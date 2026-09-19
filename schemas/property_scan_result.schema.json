@@ -1,0 +1,1910 @@
+{
+  "$defs": {
+    "AngleMeasurement": {
+      "additionalProperties": false,
+      "description": "Counterclockwise orientation in degrees from property +X, in [0, 360].",
+      "properties": {
+        "confidence_level": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Coverage probability of an interval, if known.",
+          "title": "Confidence Level"
+        },
+        "confidence_score": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Evidence quality score; not interval coverage.",
+          "title": "Confidence Score"
+        },
+        "lower_bound": {
+          "anyOf": [
+            {
+              "maximum": 360,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lower Bound"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Provenance or calibration method; no default method is assumed.",
+          "title": "Method"
+        },
+        "unit": {
+          "const": "degree",
+          "default": "degree",
+          "title": "Unit",
+          "type": "string"
+        },
+        "upper_bound": {
+          "anyOf": [
+            {
+              "maximum": 360,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upper Bound"
+        },
+        "value": {
+          "maximum": 360,
+          "minimum": 0,
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "AngleMeasurement",
+      "type": "object"
+    },
+    "AreaMeasurement": {
+      "additionalProperties": false,
+      "description": "Area in square meters.",
+      "properties": {
+        "confidence_level": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Coverage probability of an interval, if known.",
+          "title": "Confidence Level"
+        },
+        "confidence_score": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Evidence quality score; not interval coverage.",
+          "title": "Confidence Score"
+        },
+        "lower_bound": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Lower bound in the same unit.",
+          "title": "Lower Bound"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Provenance or calibration method; no default method is assumed.",
+          "title": "Method"
+        },
+        "unit": {
+          "const": "m2",
+          "default": "m2",
+          "title": "Unit",
+          "type": "string"
+        },
+        "upper_bound": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Upper bound in the same unit.",
+          "title": "Upper Bound"
+        },
+        "value": {
+          "description": "Observed or computed value in the declared unit.",
+          "minimum": 0,
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "AreaMeasurement",
+      "type": "object"
+    },
+    "BoundingBox2D": {
+      "additionalProperties": false,
+      "description": "Axis-aligned metric box in the owner's coordinate frame.",
+      "properties": {
+        "max_point": {
+          "$ref": "#/$defs/Point2D"
+        },
+        "min_point": {
+          "$ref": "#/$defs/Point2D"
+        }
+      },
+      "required": [
+        "min_point",
+        "max_point"
+      ],
+      "title": "BoundingBox2D",
+      "type": "object"
+    },
+    "BoundingDimensions": {
+      "additionalProperties": false,
+      "description": "Axis-aligned property extents; no dimensions are derived automatically.",
+      "properties": {
+        "height": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LengthMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "length": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LengthMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "width": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LengthMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "BoundingDimensions",
+      "type": "object"
+    },
+    "CaptureMetadata": {
+      "additionalProperties": false,
+      "description": "Actual provenance only; timestamps and device details are never invented.",
+      "properties": {
+        "capture_id": {
+          "description": "Identifier linking this result to its normalized capture.",
+          "format": "uuid",
+          "title": "Capture Id",
+          "type": "string"
+        },
+        "capture_timestamp": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Capture Timestamp"
+        },
+        "device_model": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device Model"
+        },
+        "device_name": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device Name"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Metadata",
+          "type": "object"
+        },
+        "operating_system": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operating System"
+        },
+        "processing_timestamp": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Processing Timestamp"
+        },
+        "source_reference": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Portable path or URI; not resolved or opened during validation.",
+          "title": "Source Reference"
+        },
+        "source_type": {
+          "$ref": "#/$defs/SourceType",
+          "default": "unknown"
+        },
+        "tier": {
+          "$ref": "#/$defs/InputTier"
+        }
+      },
+      "required": [
+        "capture_id",
+        "tier"
+      ],
+      "title": "CaptureMetadata",
+      "type": "object"
+    },
+    "CeilingSurface": {
+      "additionalProperties": false,
+      "description": "Ceiling footprint with explicit height above the associated room floor.",
+      "properties": {
+        "area": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AreaMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "damage_ids": {
+          "items": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "title": "Damage Ids",
+          "type": "array"
+        },
+        "height": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LengthMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Ceiling height above the room floor, in meters; null if unavailable."
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Metadata",
+          "type": "object"
+        },
+        "polygon": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Polygon2D"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "surface_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Surface Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "surface_id"
+      ],
+      "title": "CeilingSurface",
+      "type": "object"
+    },
+    "ConcealedDamageFlag": {
+      "additionalProperties": false,
+      "description": "Rule-backed suspicion, not a confirmed observation of hidden damage.",
+      "properties": {
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "evidence": {
+          "description": "Descriptions or references to actual supporting observations.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "flag_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Flag Id",
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Metadata",
+          "type": "object"
+        },
+        "room_id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Room Id"
+        },
+        "rule_description": {
+          "description": "Required explanation of why the rule flags a risk.",
+          "minLength": 1,
+          "title": "Rule Description",
+          "type": "string"
+        },
+        "rule_id": {
+          "description": "Required identifier of the rule that fired.",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "surface_id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Surface Id"
+        },
+        "suspected_damage_type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DamageType"
+            },
+            {
+              "minLength": 1,
+              "type": "string"
+            }
+          ],
+          "default": "unknown",
+          "title": "Suspected Damage Type"
+        }
+      },
+      "required": [
+        "flag_id",
+        "rule_id",
+        "rule_description"
+      ],
+      "title": "ConcealedDamageFlag",
+      "type": "object"
+    },
+    "ConnectionType": {
+      "enum": [
+        "door",
+        "open_passage",
+        "inferred",
+        "unknown"
+      ],
+      "title": "ConnectionType",
+      "type": "string"
+    },
+    "DamageRegion": {
+      "additionalProperties": false,
+      "description": "Visible observation; unknown metric size stays null, never zero-filled.",
+      "properties": {
+        "bounding_box": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BoundingBox2D"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Metric bounds in the same frame as polygon_2d."
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "damage_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Damage Id",
+          "type": "string"
+        },
+        "damage_type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DamageType"
+            },
+            {
+              "minLength": 1,
+              "type": "string"
+            }
+          ],
+          "default": "unknown",
+          "description": "Known category or nonempty custom category.",
+          "title": "Damage Type"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Metadata",
+          "type": "object"
+        },
+        "metric_area": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AreaMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "metric_length": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LengthMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        },
+        "polygon_2d": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Polygon2D"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Metric surface-local coordinates; not image pixels. See data_model.md."
+        },
+        "room_id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Room Id"
+        },
+        "severity": {
+          "$ref": "#/$defs/DamageSeverity",
+          "default": "unknown"
+        },
+        "source_frames": {
+          "description": "Source file/URI/frame references; not opened during validation.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Source Frames",
+          "type": "array"
+        },
+        "surface_id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Surface Id"
+        }
+      },
+      "required": [
+        "damage_id"
+      ],
+      "title": "DamageRegion",
+      "type": "object"
+    },
+    "DamageSeverity": {
+      "enum": [
+        "minor",
+        "moderate",
+        "severe",
+        "unknown"
+      ],
+      "title": "DamageSeverity",
+      "type": "string"
+    },
+    "DamageType": {
+      "enum": [
+        "crack",
+        "water_damage",
+        "moisture_stain",
+        "mold",
+        "hole",
+        "peeling_paint",
+        "surface_damage",
+        "unknown"
+      ],
+      "title": "DamageType",
+      "type": "string"
+    },
+    "FloorSurface": {
+      "additionalProperties": false,
+      "description": "Room floor; polygon uses the property XY frame.",
+      "properties": {
+        "area": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AreaMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "damage_ids": {
+          "items": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "title": "Damage Ids",
+          "type": "array"
+        },
+        "material": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Material"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Metadata",
+          "type": "object"
+        },
+        "polygon": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Polygon2D"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "surface_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Surface Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "surface_id"
+      ],
+      "title": "FloorSurface",
+      "type": "object"
+    },
+    "InputTier": {
+      "description": "Input acquisition modes, not separate processing pipelines.",
+      "enum": [
+        "photo",
+        "video",
+        "lidar"
+      ],
+      "title": "InputTier",
+      "type": "string"
+    },
+    "JsonValue": {},
+    "LengthMeasurement": {
+      "additionalProperties": false,
+      "description": "Distance in meters; cannot accidentally accept an area or imperial unit.",
+      "properties": {
+        "confidence_level": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Coverage probability of an interval, if known.",
+          "title": "Confidence Level"
+        },
+        "confidence_score": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Evidence quality score; not interval coverage.",
+          "title": "Confidence Score"
+        },
+        "lower_bound": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Lower bound in the same unit.",
+          "title": "Lower Bound"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Provenance or calibration method; no default method is assumed.",
+          "title": "Method"
+        },
+        "unit": {
+          "const": "m",
+          "default": "m",
+          "title": "Unit",
+          "type": "string"
+        },
+        "upper_bound": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Upper bound in the same unit.",
+          "title": "Upper Bound"
+        },
+        "value": {
+          "description": "Observed or computed value in the declared unit.",
+          "minimum": 0,
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "LengthMeasurement",
+      "type": "object"
+    },
+    "Opening": {
+      "additionalProperties": false,
+      "description": "Defined once at property level, optionally joining two rooms.",
+      "properties": {
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "height": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LengthMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Metadata",
+          "type": "object"
+        },
+        "opening_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Opening Id",
+          "type": "string"
+        },
+        "position_along_wall": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LengthMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Offset from primary wall start toward its end, in meters."
+        },
+        "room_ids": {
+          "items": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 2,
+          "title": "Room Ids",
+          "type": "array"
+        },
+        "sill_height": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LengthMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "type": {
+          "$ref": "#/$defs/OpeningType",
+          "default": "unknown"
+        },
+        "wall_id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Primary host wall, if identified.",
+          "title": "Wall Id"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LengthMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "opening_id"
+      ],
+      "title": "Opening",
+      "type": "object"
+    },
+    "OpeningType": {
+      "enum": [
+        "door",
+        "window",
+        "open_passage",
+        "unknown"
+      ],
+      "title": "OpeningType",
+      "type": "string"
+    },
+    "Point2D": {
+      "additionalProperties": false,
+      "description": "XY position in meters in the coordinate frame documented by the owner.",
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "Point2D",
+      "type": "object"
+    },
+    "Polygon2D": {
+      "additionalProperties": false,
+      "description": "Ordered vertices; implicit closure, with an optional repeated final vertex.\n\nAt least three distinct points are required. Winding, intersections, holes,\ncollinearity, and planarity are not evaluated in this schema phase.",
+      "properties": {
+        "points": {
+          "description": "Ordered metric vertices; no pixels.",
+          "items": {
+            "$ref": "#/$defs/Point2D"
+          },
+          "minItems": 3,
+          "title": "Points",
+          "type": "array"
+        }
+      },
+      "required": [
+        "points"
+      ],
+      "title": "Polygon2D",
+      "type": "object"
+    },
+    "ProcessingInfo": {
+      "additionalProperties": false,
+      "description": "Optional, supplied facts about a run; no timestamps or durations fabricated.",
+      "properties": {
+        "completed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Completed At"
+        },
+        "errors": {
+          "items": {
+            "$ref": "#/$defs/ProcessingIssue"
+          },
+          "title": "Errors",
+          "type": "array"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Metadata",
+          "type": "object"
+        },
+        "model_versions": {
+          "additionalProperties": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "propertyNames": {
+            "minLength": 1
+          },
+          "title": "Model Versions",
+          "type": "object"
+        },
+        "modules_used": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Modules Used",
+          "type": "array"
+        },
+        "pipeline_version": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pipeline Version"
+        },
+        "processing_seconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Processing Seconds"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Started At"
+        }
+      },
+      "title": "ProcessingInfo",
+      "type": "object"
+    },
+    "ProcessingIssue": {
+      "additionalProperties": false,
+      "description": "Processing error information; does not imply successful execution.",
+      "properties": {
+        "code": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "module": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Module"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "ProcessingIssue",
+      "type": "object"
+    },
+    "PropertyGeometry": {
+      "additionalProperties": false,
+      "description": "Stitched property in a local right-handed metric frame with Z up.\n\nRoom floor area lives at floor.area and ceiling height at ceiling.height to\navoid conflicting copies. Empty collections can represent incomplete work.",
+      "properties": {
+        "bounding_dimensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BoundingDimensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "footprint_polygon": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Polygon2D"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Metadata",
+          "type": "object"
+        },
+        "openings": {
+          "items": {
+            "$ref": "#/$defs/Opening"
+          },
+          "title": "Openings",
+          "type": "array"
+        },
+        "property_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Property Id",
+          "type": "string"
+        },
+        "room_connections": {
+          "items": {
+            "$ref": "#/$defs/RoomConnection"
+          },
+          "title": "Room Connections",
+          "type": "array"
+        },
+        "rooms": {
+          "items": {
+            "$ref": "#/$defs/Room"
+          },
+          "title": "Rooms",
+          "type": "array"
+        },
+        "total_floor_area": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AreaMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "property_id"
+      ],
+      "title": "PropertyGeometry",
+      "type": "object"
+    },
+    "QuantityMeasurement": {
+      "additionalProperties": false,
+      "description": "Scope quantity with its unit stored once; pricing is outside the contract.",
+      "properties": {
+        "confidence_level": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Coverage probability of an interval, if known.",
+          "title": "Confidence Level"
+        },
+        "confidence_score": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Evidence quality score; not interval coverage.",
+          "title": "Confidence Score"
+        },
+        "lower_bound": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Lower bound in the same unit.",
+          "title": "Lower Bound"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Provenance or calibration method; no default method is assumed.",
+          "title": "Method"
+        },
+        "unit": {
+          "enum": [
+            "m",
+            "m2",
+            "item"
+          ],
+          "title": "Unit",
+          "type": "string"
+        },
+        "upper_bound": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Upper bound in the same unit.",
+          "title": "Upper Bound"
+        },
+        "value": {
+          "description": "Observed or computed value in the declared unit.",
+          "minimum": 0,
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "unit"
+      ],
+      "title": "QuantityMeasurement",
+      "type": "object"
+    },
+    "ResultWarning": {
+      "additionalProperties": false,
+      "description": "Actionable diagnostic with optional links to known geometry.",
+      "properties": {
+        "code": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "room_id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Room Id"
+        },
+        "surface_id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Surface Id"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "ResultWarning",
+      "type": "object"
+    },
+    "Room": {
+      "additionalProperties": false,
+      "description": "Room with optional geometry; open vocabulary room_type accepts custom labels.",
+      "properties": {
+        "ceiling": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CeilingSurface"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "damage_ids": {
+          "items": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "title": "Damage Ids",
+          "type": "array"
+        },
+        "floor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FloorSurface"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Metadata",
+          "type": "object"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "opening_ids": {
+          "items": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "title": "Opening Ids",
+          "type": "array"
+        },
+        "polygon": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Polygon2D"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "room_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Room Id",
+          "type": "string"
+        },
+        "room_type": {
+          "default": "unknown",
+          "minLength": 1,
+          "title": "Room Type",
+          "type": "string"
+        },
+        "walls": {
+          "items": {
+            "$ref": "#/$defs/Wall"
+          },
+          "title": "Walls",
+          "type": "array"
+        }
+      },
+      "required": [
+        "room_id"
+      ],
+      "title": "Room",
+      "type": "object"
+    },
+    "RoomConnection": {
+      "additionalProperties": false,
+      "description": "Explicit edge in the property graph, optionally supported by an opening.",
+      "properties": {
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "connection_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Connection Id",
+          "type": "string"
+        },
+        "connection_type": {
+          "$ref": "#/$defs/ConnectionType",
+          "default": "unknown"
+        },
+        "opening_id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Opening Id"
+        },
+        "room_a_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Room A Id",
+          "type": "string"
+        },
+        "room_b_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Room B Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "connection_id",
+        "room_a_id",
+        "room_b_id"
+      ],
+      "title": "RoomConnection",
+      "type": "object"
+    },
+    "ScopeLineItem": {
+      "additionalProperties": false,
+      "description": "Repair action with an optional measured quantity and no price fields.",
+      "properties": {
+        "action": {
+          "minLength": 1,
+          "title": "Action",
+          "type": "string"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "damage_id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Damage Id"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "line_item_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Line Item Id",
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Metadata",
+          "type": "object"
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QuantityMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "room_id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Room Id"
+        },
+        "surface_id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Surface Id"
+        }
+      },
+      "required": [
+        "line_item_id",
+        "action",
+        "description"
+      ],
+      "title": "ScopeLineItem",
+      "type": "object"
+    },
+    "SourceType": {
+      "enum": [
+        "directory",
+        "file",
+        "uri",
+        "unknown"
+      ],
+      "title": "SourceType",
+      "type": "string"
+    },
+    "Wall": {
+      "additionalProperties": false,
+      "description": "Room-owned wall in the shared property XY frame; wall_id is a surface ID.",
+      "properties": {
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "damage_ids": {
+          "items": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "title": "Damage Ids",
+          "type": "array"
+        },
+        "end_point": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Point2D"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "height": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LengthMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "length": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LengthMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Metadata",
+          "type": "object"
+        },
+        "opening_ids": {
+          "items": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "title": "Opening Ids",
+          "type": "array"
+        },
+        "orientation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AngleMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "room_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Room Id",
+          "type": "string"
+        },
+        "start_point": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Point2D"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "thickness": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LengthMeasurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "wall_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Wall Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "wall_id",
+        "room_id"
+      ],
+      "title": "Wall",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Official output contract, shared by photos, video, and LiDAR.\n\nCollections contain only known entities; an empty collection does not prove\nthat analysis ran or that a property has no damage. Consult processing_info\nand warnings. Optional values are null when unknown.",
+  "properties": {
+    "capture": {
+      "$ref": "#/$defs/CaptureMetadata"
+    },
+    "concealed_damage_flags": {
+      "items": {
+        "$ref": "#/$defs/ConcealedDamageFlag"
+      },
+      "title": "Concealed Damage Flags",
+      "type": "array"
+    },
+    "damages": {
+      "items": {
+        "$ref": "#/$defs/DamageRegion"
+      },
+      "title": "Damages",
+      "type": "array"
+    },
+    "metadata": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "description": "Namespaced extension/provenance data, including synthetic fixture labels.",
+      "title": "Metadata",
+      "type": "object"
+    },
+    "processing_info": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ProcessingInfo"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "property": {
+      "$ref": "#/$defs/PropertyGeometry"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "scope_line_items": {
+      "items": {
+        "$ref": "#/$defs/ScopeLineItem"
+      },
+      "title": "Scope Line Items",
+      "type": "array"
+    },
+    "warnings": {
+      "items": {
+        "$ref": "#/$defs/ResultWarning"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "capture",
+    "property"
+  ],
+  "title": "PropertyScanResult",
+  "type": "object"
+}

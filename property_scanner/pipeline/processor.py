@@ -14,6 +14,7 @@ from property_scanner.pipeline.context import ProcessingStage, ScanContext
 from property_scanner.reconstruction.base import SceneReconstructor
 from property_scanner.rendering.floorplan import FloorPlanRenderer
 from property_scanner.schemas.common import PreparationResult
+from property_scanner.schemas.result import PropertyScanResult
 from property_scanner.stitching.engine import StitchingEngine
 
 logger = logging.getLogger(__name__)
@@ -45,7 +46,7 @@ class PropertyScanPipeline:
         logger.info("Output directory created: %s", output_dir)
         return PreparationResult(capture=capture, output_dir=output_dir)
 
-    def process(self, prepared: PreparationResult) -> ScanContext:
+    def process(self, prepared: PreparationResult) -> PropertyScanResult:
         """Reserved downstream flow; currently raises at reconstruction.
 
         The CLI intentionally calls only prepare(). No success-shaped scan result
@@ -54,4 +55,6 @@ class PropertyScanPipeline:
         context = ScanContext(capture=prepared.capture, output_dir=prepared.output_dir)
         for stage in self.stages:
             context = stage.run(context)
-        return context
+        if context.result is None:
+            raise NotImplementedError("Unified result assembly is not implemented yet.")
+        return context.result

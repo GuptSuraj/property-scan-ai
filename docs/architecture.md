@@ -51,7 +51,8 @@ package import or settings load.
 | Confidence (`confidence/`) | Future uncertainty and provenance based on actual evidence | Arbitrary fixed confidence values |
 | Rendering (`rendering/`) | Future 2D presentation of the unified result | Estimating missing geometry |
 
-`schemas/common.py` owns the current capture and receipt contracts. `core/`
+`schemas/common.py` owns capture-preparation and receipt contracts; the other
+`schemas/` modules own the versioned unified output contract. `core/`
 contains application errors, readable application-scoped logging, and output
 allocation. `config/` loads validated environment settings. The CLI remains a
 thin entry point and does not contain processing logic.
@@ -60,7 +61,8 @@ thin entry point and does not contain processing logic.
 
 `ProcessingStage` is a small structural protocol with `run(ScanContext)`.
 `ScanContext` carries the normalized capture, output directory, and references
-to future real artifact files. Keeping references rather than tensors or point
+to future real artifact files. Its optional `result: PropertyScanResult` holds
+only a real assembled result, and defaults to `None`. Keeping references rather than tensors or point
 clouds at orchestration boundaries avoids eagerly loading large data into RAM.
 There is no service layer, database, or heavyweight dependency injection system.
 
@@ -78,15 +80,20 @@ lack absolute scale; unavailable dimensions must remain unavailable. Multi-room
 capture grouping and manifests are deferred; current photo validation describes
 one room only.
 
-After confidence estimation, assemble one versioned `PropertyScanResult` for
-JSON export and floor plan rendering. Define this domain schema alongside real
-geometry and measurement requirements: rooms, wall lengths, dimensions, areas,
-ceiling heights, openings, damage regions, repair items, evidence, units, and
-confidence intervals. Represent missing measurements explicitly and distinguish
-uncertainty intervals from detection scores. The unified result model and JSON
-exporter are intentionally not implemented in this foundation; a preparation
-receipt must never be mistaken for that result. Rendering will consume that
-same model rather than calculating its own dimensions.
+The versioned `PropertyScanResult` and JSON utilities are now implemented; see
+[data_model.md](data_model.md). The model covers rooms, wall measurements,
+surfaces, ceiling heights, openings, property connections, visible damage,
+rule-backed concealed-damage flags, scope quantities, warnings, and provenance.
+Missing measurements stay null and interval coverage is separate from a quality
+score. `PropertyScanPipeline.process()` is typed to return this same model for
+every tier, but still raises at reconstruction. Even if all stage placeholders
+are bypassed, missing result assembly raises rather than returning fake data.
+
+Future stages will assemble the result after confidence estimation and before
+rendering, which will consume that same model rather than calculating its own
+dimensions. JSON export currently serializes only supplied, validated objects;
+it does not perform analysis. A preparation receipt remains a separate type and
+must never be mistaken for a property scan result.
 
 This approach keeps input formats isolated while sharing all downstream rules.
 Future backends can be swapped independently without duplicating a complete app

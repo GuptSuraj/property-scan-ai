@@ -26,6 +26,7 @@ class RenderingConfig(ContractModel):
     show_legend: bool = True
     show_north_arrow: bool = False
     show_missing_ceiling: bool = True
+    show_opening_labels: bool = False
     dpi: int = Field(default=250, ge=72, le=600)
     background: Literal["white", "transparent"] = "white"
     inches_per_meter: float = Field(default=1, gt=0, le=5)

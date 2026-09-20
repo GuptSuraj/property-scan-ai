@@ -25,14 +25,16 @@ logger = logging.getLogger(__name__)
 PIPELINE_VERSION = "lidar-rgbd-1.0.0"
 
 
-def process_lidar(prepared: PreparationResult, config: LidarConfig, adapter: LidarCaptureAdapter | None = None) -> PropertyScanResult:
+def process_lidar(prepared: PreparationResult, config: LidarConfig, adapter: LidarCaptureAdapter | None = None,
+                  model_dir: Path = Path("models")) -> PropertyScanResult:
     try:
-        return _process(prepared, config, adapter)
+        return _process(prepared, config, adapter, model_dir)
     except (OSError, RuntimeError) as exc:
         raise ProcessingError(f"LiDAR processing failed; existing artifacts retained: {exc}") from exc
 
 
-def _process(prepared: PreparationResult, config: LidarConfig, adapter: LidarCaptureAdapter | None) -> PropertyScanResult:
+def _process(prepared: PreparationResult, config: LidarConfig, adapter: LidarCaptureAdapter | None,
+             model_dir: Path) -> PropertyScanResult:
     started, timer = datetime.now(timezone.utc), perf_counter()
     output = prepared.output_dir
     lidar, ablation, diagnostics = output/"lidar", output/"ablation", output/"diagnostics"/"lidar"
@@ -46,7 +48,8 @@ def _process(prepared: PreparationResult, config: LidarConfig, adapter: LidarCap
         "open3d_version": o3d.__version__, "numpy_version": np.__version__, "config": config.model_dump(mode="json"),
         "manifest": manifest.model_dump(mode="json"), "intrinsics": adapter.intrinsics.model_dump()})
     logger.info("%s frames discovered; building bounded keyframes", manifest.frame_count)
-    frames = build_keyframes(adapter, config)
+    opening_cache = lidar/"opening_frames"
+    frames = build_keyframes(adapter, config, opening_cache)
     logger.info("%s keyframes selected", len(frames))
     warnings = list(adapter.warnings)
     errors = []
@@ -70,6 +73,14 @@ def _process(prepared: PreparationResult, config: LidarConfig, adapter: LidarCap
         o3d.io.write_pose_graph(str(diagnostics/"pose_graph.json"), graph)
         logger.info("Creating corrected reconstruction")
         fuse(frames, optimized_poses, config, lidar/"corrected_fused.ply")
+    opening_poses = optimized_poses if optimized_poses is not None else raw_poses
+    write_json(opening_cache/"frames.json", {"frames": [{
+        "frame_id": f"lidar:{frame.frame_id}",
+        "image_path": f"lidar/opening_frames/{frame.frame_id:06d}.jpg",
+        "depth_path": f"lidar/opening_frames/{frame.frame_id:06d}.npy",
+        "intrinsics": adapter.intrinsics.model_dump(), "camera_to_property": pose.tolist(),
+        "room_id": "room_01", "depth_source": "sensor", "metadata": {}
+        } for frame, pose in zip(frames, opening_poses, strict=True)]})
     write_json(diagnostics/"registrations.json", [r.model_dump() for r in records])
     write_json(diagnostics/"frame_counts.json", adapter.counts.model_dump())
     modes = {"off": raw}
@@ -135,5 +146,7 @@ def _process(prepared: PreparationResult, config: LidarConfig, adapter: LidarCap
                                    "python_version": platform.python_version(), "open3d_version": o3d.__version__}),
         metadata={"synthetic": manifest.metadata.get("synthetic", False), "source_to_floor_transform": selected.source_to_floor_transform if selected else None},
     )
+    from property_scanner.openings.cached import try_process_cached_openings
+    try_process_cached_openings(output, result, model_dir, config.opening)
     save_result(result, output/"result.json")
     return result

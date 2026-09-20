@@ -63,7 +63,7 @@ package import or settings load.
 | Reconstruction (`reconstruction/`) | Canonical RGB-D, photo/video CPU SfM, metric depth/scale, bounded point clouds, fusion, ICP/pose graphs | Repair scope or display formatting |
 | Geometry (`geometry/`) | Implemented single-room point-cloud planes, wall intersections, polygons and metric measurements | Capture codecs, reconstruction, stitching |
 | Stitching (`stitching/`) | Cross-room evidence, SE(2) graph layout, robust optimization, overlap validation, and property footprint | Independent measurement logic or room rescaling |
-| Semantic analysis (`openings/`, `damage/`) | Future doors/windows/openings, visible damage regions, repair/scope suggestions | Invented dimensions or unsupported hidden damage |
+| Semantic analysis (`openings/`, `damage/`) | Implemented shared metric doors/windows/openings; future visible damage and repair/scope suggestions | Wall redetection, invented dimensions, or unsupported hidden damage |
 | Measurement (`measurements/`) | Future physical quantities derived from scaled geometry | UI formatting or sensor-specific decoding |
 | Confidence (`confidence/`) | Future uncertainty and provenance based on actual evidence | Arbitrary fixed confidence values |
 | Rendering (`rendering/`) | Implemented dimensioned PNG/SVG from supplied room/property geometry, openings, and measurements | Estimating missing geometry, stitching, or detection |

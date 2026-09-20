@@ -7,7 +7,7 @@ visible damage, repair/scope items, confidence intervals, and structured JSON.
 
 **Current status: metric photo reconstruction with evidence-based single-floor room stitching, local metric video reconstruction, canonical LiDAR/RGB-D
 reconstruction with optional drift correction, unified JSON, point-cloud geometry,
-and dimensioned PNG/SVG plans.** Damage AI and semantic opening detection remain
+dimensioned PNG/SVG plans, and conservative metric door/window/opening detection.** Damage AI remains
 unimplemented. Photo rooms, video, and canonical LiDAR captures process when
 their external dependencies and required inputs are available. A development command can
 measure an already reconstructed metric single-room `.ply`/`.pcd` cloud.
@@ -114,7 +114,8 @@ python scripts/download_models.py
 Tests cover imports, adapters, validation, settings, JSON contracts, synthetic
 geometry/LiDAR/video reconstruction, robust video scale recovery, and rendering.
 Synthetic fixtures test algorithms and do not establish real-world accuracy. The
-model download script makes an explicit network request only with `--video`.
+model download script makes an explicit network request only with `--video`,
+`--photo`, or `--openings`.
 
 ## Limitations and planned phases
 
@@ -126,7 +127,7 @@ model download script makes an explicit network request only with `--video`.
 3. **Reconstruction (partially implemented):** local CPU RGB-D fusion, shared
    ICP/pose graphs, CPU COLMAP SfM, metric depth, and robust photo/video scale recovery work.
 4. **Geometry (partially implemented):** metric point-cloud geometry and rigid,
-   evidence-based single-floor photo room stitching work; semantic openings remain future work.
+   evidence-based single-floor photo room stitching and shared metric opening detection work.
 5. **Analysis:** visible damage, repair/scope items, measurements, and validated
    confidence intervals.
 6. **Outputs (partially implemented):** JSON serialization and dimensioned PNG/SVG
@@ -290,6 +291,25 @@ door swings, or room positions are inferred. Missing ceiling height is shown as
 unavailable. See [docs/floorplan_renderer.md](docs/floorplan_renderer.md) for API,
 styling, validation, and limitations. Full tests including geometry require
 `python -m pip install -e '.[dev,geometry,rendering]'`.
+
+## Door, window, and opening detection
+
+One shared downstream module uses the pinned SegFormer-B0 ADE20K checkpoint,
+metric depth, camera poses, and existing wall geometry. It can populate doors,
+windows, unknown openings, and open passages with metric width, supported height,
+sill height, and position along a wall. Detections are conservative and are not
+guaranteed for every capture.
+
+```bash
+python -m pip install -e '.[dev,openings]'
+python scripts/download_models.py --openings
+python scripts/detect_openings.py --capture ./outputs/<capture_id>
+python scripts/test_openings_synthetic.py
+```
+
+Normal photo, video, and canonical LiDAR commands attempt the stage automatically.
+Without cached weights they retain reconstruction outputs and report a warning.
+See [docs/opening_detection.md](docs/opening_detection.md).
 
 ## Unified JSON contract
 

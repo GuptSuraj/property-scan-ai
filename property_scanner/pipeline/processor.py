@@ -58,7 +58,7 @@ class PropertyScanPipeline:
             except ImportError as exc:
                 from property_scanner.core.exceptions import ConfigurationError
                 raise ConfigurationError("Install LiDAR dependencies: pip install -e '.[lidar]'") from exc
-            return process_lidar(prepared, lidar_config or LidarConfig())
+            return process_lidar(prepared, lidar_config or LidarConfig(), model_dir=self.settings.model_dir)
         if prepared.capture.tier == "video" and video_config is not None:
             try:
                 from property_scanner.reconstruction.video.pipeline import process_video

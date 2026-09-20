@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import numpy as np
 import open3d as o3d
+from PIL import Image
 from property_scanner.core.exceptions import ProcessingError
 from property_scanner.reconstruction.lidar.adapter import RGBDFrame, LidarCaptureAdapter
 from property_scanner.reconstruction.lidar.models import CameraIntrinsics, LidarConfig
@@ -32,7 +33,7 @@ def frame_cloud(frame: RGBDFrame, intrinsics: CameraIntrinsics, config: LidarCon
     return cloud
 
 
-def build_keyframes(adapter: LidarCaptureAdapter, config: LidarConfig) -> list[Keyframe]:
+def build_keyframes(adapter: LidarCaptureAdapter, config: LidarConfig, cache_dir: Path | None = None) -> list[Keyframe]:
     frames = []
     sampled_ids = {frame.frame_id for frame in adapter.manifest.frames[::config.frame_stride]}
     for frame in adapter.load_frames(config):
@@ -49,6 +50,10 @@ def build_keyframes(adapter: LidarCaptureAdapter, config: LidarConfig) -> list[K
             adapter.counts.frames_not_selected += 1
             continue
         frames.append(Keyframe(frame.frame_id, cloud, frame.pose.copy()))
+        if cache_dir is not None:
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            Image.fromarray(frame.rgb).save(cache_dir/f"{frame.frame_id:06d}.jpg", quality=95)
+            np.save(cache_dir/f"{frame.frame_id:06d}.npy", frame.depth_m.astype(np.float32))
     adapter.counts.frames_skipped = adapter.counts.frames_total - len(frames)
     if len(frames) < config.min_keyframes:
         raise ProcessingError(f"Only {len(frames)} usable keyframes; need {config.min_keyframes}")

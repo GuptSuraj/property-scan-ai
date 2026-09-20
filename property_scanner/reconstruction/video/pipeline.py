@@ -177,5 +177,7 @@ def process_video(prepared: PreparationResult, config: VideoConfig, model_dir: P
             model_versions={config.depth_model:config.depth_revision} if 'metric_depth' in modules else {},
             metadata={'metric_scale':scale.model_dump(),'inference_device':getattr(locals().get('estimator'),'device',None),'open3d_version':o3d.__version__,'python_version':platform.python_version()}),
         metadata={'sfm_metric_to_canonical':orientation})
+    from property_scanner.openings.cached import try_process_cached_openings
+    try_process_cached_openings(output, result, model_dir, config.registration.opening)
     save_result(result,output/'result.json')
     return result

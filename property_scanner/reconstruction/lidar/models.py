@@ -4,6 +4,7 @@ from uuid import UUID
 from pydantic import Field, AwareDatetime, JsonValue, model_validator
 from property_scanner.schemas.base import ContractModel, NonEmptyText
 from property_scanner.geometry.config import GeometryConfig
+from property_scanner.openings.models import OpeningConfig
 
 
 class FrameReference(ContractModel):
@@ -104,6 +105,7 @@ class LidarConfig(ContractModel):
     pose_graph_edge_prune_threshold: float = Field(default=0.25, ge=0, le=1)
     device_prior_information: float = Field(default=0.01, gt=0)
     geometry: GeometryConfig = Field(default_factory=GeometryConfig)
+    opening: OpeningConfig = Field(default_factory=OpeningConfig)
 
     @model_validator(mode="after")
     def limits(self) -> Self:

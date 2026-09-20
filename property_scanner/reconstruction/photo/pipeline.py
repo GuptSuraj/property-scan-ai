@@ -309,5 +309,7 @@ def process_photo(
         else:
             summary.update({"stitching_performed": True, "stitching_valid": False})
         write_json(output / "photo_summary.json", summary)
+    from property_scanner.openings.cached import try_process_cached_openings
+    try_process_cached_openings(output, result, model_dir, config.registration.opening)
     save_result(result, output / "result.json")
     return result

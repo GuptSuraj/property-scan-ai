@@ -74,3 +74,10 @@ def draw_opening(ax: Axes, item: PositionedOpening, config: RenderingConfig) -> 
         if kind == OpeningType.UNKNOWN:
             ax.text(*((a+b)/2), "?", ha="center", va="center", fontsize=config.font_size,
                     color=config.opening_color, parse_math=False, zorder=7)
+    if config.show_opening_labels and item.opening.width is not None:
+        labels = {OpeningType.DOOR: "Door", OpeningType.WINDOW: "Window",
+                  OpeningType.OPEN_PASSAGE: "Passage", OpeningType.UNKNOWN: "Opening"}
+        midpoint = (a+b)/2 + normal*2.2
+        ax.text(*midpoint, f"{labels[kind]}\n{item.opening.width.value:.{config.display_precision}f} m",
+                ha="center", va="center", fontsize=config.font_size, color=config.opening_color,
+                parse_math=False, zorder=7)

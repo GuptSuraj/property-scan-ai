@@ -1,4 +1,4 @@
-"""Explicit optional video model download; no weights enter Git."""
+"""Explicit shared photo/video metric-depth download; no weights enter Git."""
 import argparse
 from pathlib import Path
 import sys
@@ -8,9 +8,10 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 def main() -> int:
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--video',action='store_true',help='Download pinned Depth Anything V2 Small metric indoor weights')
+    parser.add_argument('--photo',action='store_true',help='Download the same shared metric-depth weights for photo mode')
     args=parser.parse_args()
-    if not args.video:
-        print('No download requested. Foundation, geometry, rendering and LiDAR require no AI models. Use --video for metric depth.')
+    if not (args.video or args.photo):
+        print('No download requested. Use --photo or --video for the shared metric-depth model.')
         return 0
     from huggingface_hub import snapshot_download
     from config.settings import load_settings

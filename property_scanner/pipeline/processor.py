@@ -18,12 +18,13 @@ from property_scanner.schemas.result import PropertyScanResult
 from property_scanner.reconstruction.lidar.models import LidarConfig
 from property_scanner.stitching.engine import StitchingEngine
 from property_scanner.reconstruction.video.models import VideoConfig
+from property_scanner.reconstruction.photo.models import PhotoConfig
 
 logger = logging.getLogger(__name__)
 
 
 class PropertyScanPipeline:
-    """Shared entry point for preparation, metric video, and canonical LiDAR."""
+    """Shared entry point for photo rooms, metric video, and canonical LiDAR."""
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
@@ -48,7 +49,8 @@ class PropertyScanPipeline:
         logger.info("Output directory created: %s", output_dir)
         return PreparationResult(capture=capture, output_dir=output_dir)
 
-    def process(self, prepared: PreparationResult, *, lidar_config: LidarConfig | None = None, video_config: VideoConfig | None = None) -> PropertyScanResult:
+    def process(self, prepared: PreparationResult, *, lidar_config: LidarConfig | None = None,
+                video_config: VideoConfig | None = None, photo_config: PhotoConfig | None = None) -> PropertyScanResult:
         """Dispatch implemented reconstruction modes into shared downstream stages."""
         if prepared.capture.tier == "lidar" and ((prepared.capture.source_path / "manifest.json").is_file() or lidar_config is not None):
             try:
@@ -64,6 +66,13 @@ class PropertyScanPipeline:
                 from property_scanner.core.exceptions import ConfigurationError
                 raise ConfigurationError("Install video dependencies: pip install -e '.[video]'") from exc
             return process_video(prepared, video_config, self.settings.model_dir)
+        if prepared.capture.tier == "photo" and photo_config is not None:
+            try:
+                from property_scanner.reconstruction.photo.pipeline import process_photo
+            except ImportError as exc:
+                from property_scanner.core.exceptions import ConfigurationError
+                raise ConfigurationError("Install photo dependencies: pip install -e '.[photo]'") from exc
+            return process_photo(prepared, photo_config, self.settings.model_dir)
         context = ScanContext(capture=prepared.capture, output_dir=prepared.output_dir)
         for stage in self.stages:
             context = stage.run(context)

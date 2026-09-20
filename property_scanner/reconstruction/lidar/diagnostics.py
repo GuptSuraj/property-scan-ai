@@ -14,8 +14,8 @@ def write_json(path: Path, value) -> None:
     path.write_text(json.dumps(value, indent=2, sort_keys=True, allow_nan=False)+"\n", encoding="utf-8")
 
 
-def save_poses(path, frames, poses) -> None:
-    write_json(path, {"pose_convention": "camera_to_world", "coordinate_system": "canonical_z_up",
+def save_poses(path, frames, poses, *, coordinate_system="canonical_z_up") -> None:
+    write_json(path, {"pose_convention": "camera_to_world", "coordinate_system": coordinate_system,
                       "poses": [{"frame_id": f.frame_id, "matrix": p.tolist()} for f, p in zip(frames, poses, strict=True)]})
 
 

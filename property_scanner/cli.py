@@ -1,4 +1,4 @@
-"""Capture preparation plus local video and canonical LiDAR reconstruction."""
+"""Local photo/video and canonical LiDAR reconstruction with friendly errors."""
 
 import argparse
 from pathlib import Path
@@ -16,7 +16,7 @@ from property_scanner.schemas.common import InputTier
 def main(argv: Sequence[str] | None = None) -> int:
     """Return 0 for successful preparation, 2 for expected user errors."""
     parser = argparse.ArgumentParser(
-        description="Prepare photo inputs or reconstruct videos and canonical LiDAR RGB-D captures."
+        description="Reconstruct photo properties, videos, and canonical LiDAR RGB-D captures."
     )
     parser.add_argument("--tier", required=True, choices=[tier.value for tier in InputTier])
     parser.add_argument("--drift-correction", choices=["on", "off"], default=None, help="LiDAR correction mode; canonical captures default to on")
@@ -27,6 +27,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument("--prepare-only", action="store_true", help="Validate input paths and allocate output without reconstruction")
     parser.add_argument("--video-config", type=Path, help="Optional VideoConfig JSON")
+    parser.add_argument("--photo-config", type=Path, help="Optional PhotoConfig JSON")
     parser.add_argument("--max-keyframes", type=int, help="Video keyframe budget override")
     parser.add_argument("--extraction-fps", type=float, help="Video candidate-frame extraction rate override")
     parser.add_argument("--no-registration-refinement", action="store_true", help="Disable video ICP/pose-graph refinement")
@@ -35,6 +36,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                      or args.extraction_fps is not None or args.no_registration_refinement)
     if video_options and args.tier != "video":
         parser.error("Video options require --tier video")
+    if args.photo_config is not None and args.tier != "photo":
+        parser.error("--photo-config requires --tier photo")
     if args.tier != "lidar" and (args.drift_correction is not None or args.lidar_config is not None):
         parser.error("LiDAR options require --tier lidar")
     try:
@@ -44,6 +47,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         pipeline = PropertyScanPipeline(settings)
         result = pipeline.prepare(adapter)
         canonical = args.tier == "lidar" and ((result.capture.source_path / "manifest.json").is_file() or args.drift_correction is not None or args.lidar_config is not None)
+        if args.tier == "photo" and not args.prepare_only:
+            from property_scanner.reconstruction.photo.models import PhotoConfig
+            config = PhotoConfig.model_validate_json(args.photo_config.read_text()) if args.photo_config else PhotoConfig()
+            scan = pipeline.process(result, photo_config=config)
+            print(f"Capture: {scan.capture.capture_id}\nOutput: {result.output_dir}\nJSON: {result.output_dir / 'result.json'}")
+            print(f"Rooms: {len(scan.property.rooms)} successful, {len(scan.processing_info.errors)} failed")
+            print("Status: completed_with_processing_errors" if scan.processing_info.errors else "Status: processed")
+            return 0 if scan.property.rooms else 2
         if args.tier == "video" and not args.prepare_only:
             from property_scanner.reconstruction.video.models import VideoConfig
             config = VideoConfig.model_validate_json(args.video_config.read_text()) if args.video_config else VideoConfig()

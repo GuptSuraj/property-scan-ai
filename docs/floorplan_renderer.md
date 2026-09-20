@@ -45,9 +45,9 @@ for `PropertyScanResult`. Without `--output-dir`, a root result uses its capture
 UUID under `outputs/`; other input kinds receive a fresh run UUID. A missing or
 malformed file, invalid polygon, or impossible opening exits cleanly with code 2.
 `--config path.json` loads a `RenderingConfig`; `--name` labels geometry input.
-Photo CLI commands remain preparation-only. Canonical LiDAR and metric video use
-this renderer after reconstruction; see [lidar_pipeline.md](lidar_pipeline.md)
-and [video_pipeline.md](video_pipeline.md).
+Photo rooms, canonical LiDAR, and metric video use this renderer after
+reconstruction; see [photo_pipeline.md](photo_pipeline.md),
+[lidar_pipeline.md](lidar_pipeline.md), and [video_pipeline.md](video_pipeline.md).
 
 ## Python API
 

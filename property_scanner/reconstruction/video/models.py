@@ -1,6 +1,6 @@
 """Typed video configuration and acquisition-independent sparse reconstruction."""
 from typing import Literal
-from pydantic import Field, model_validator
+from pydantic import Field, JsonValue, model_validator
 from property_scanner.schemas.base import ContractModel
 from property_scanner.reconstruction.lidar.models import CameraIntrinsics, LidarConfig
 
@@ -19,6 +19,8 @@ class VideoConfig(ContractModel):
     duplicate_threshold: float = Field(default=2, ge=0, le=255)
     minimum_time_gap: float = Field(default=0.25, ge=0)
     colmap_camera_model: Literal["PINHOLE"] = "PINHOLE"
+    colmap_matching_strategy: Literal["sequential", "exhaustive"] = "sequential"
+    single_camera: bool = True
     intrinsics: CameraIntrinsics | None = None
     sequential_overlap: int = Field(default=8, ge=2, le=30)
     colmap_max_features: int = Field(default=4096, ge=100)
@@ -97,7 +99,7 @@ class RegisteredFrame(ContractModel):
 class SparseReconstruction(ContractModel):
     frames: list[RegisteredFrame]
     points: list[SparsePoint]
-    statistics: dict[str, int | float | str] = Field(default_factory=dict)
+    statistics: dict[str, JsonValue] = Field(default_factory=dict)
 
 
 class ScaleReport(ContractModel):

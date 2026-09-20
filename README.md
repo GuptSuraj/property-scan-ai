@@ -5,10 +5,10 @@ walkthrough video, and exported LiDAR data. The long-term goal is a stitched 2D
 floor plan, room dimensions, wall lengths, floor area, ceiling height, openings,
 visible damage, repair/scope items, confidence intervals, and structured JSON.
 
-**Current status: local metric video reconstruction, canonical LiDAR/RGB-D
+**Current status: independent-room metric photo reconstruction, local metric video reconstruction, canonical LiDAR/RGB-D
 reconstruction with optional drift correction, unified JSON, point-cloud geometry,
-and dimensioned PNG/SVG plans.** Photo reconstruction and damage AI remain
-unimplemented. Video and canonical LiDAR captures now process end to end when
+and dimensioned PNG/SVG plans.** Damage AI and multi-room stitching remain
+unimplemented. Photo rooms, video, and canonical LiDAR captures process when
 their external dependencies and required inputs are available. A development command can
 measure an already reconstructed metric single-room `.ply`/`.pcd` cloud.
 Validated result objects can be saved/loaded as JSON and the schema exported.
@@ -25,8 +25,8 @@ LiDAR ───┘
 ```
 
 All inputs share `PropertyScanPipeline`. Only adapters inspect the input tier.
-The shared pipeline dispatches video and canonical RGB-D reconstruction while
-photo reconstruction remains unavailable. Geometry has a
+The shared pipeline dispatches photo, video, and canonical RGB-D reconstruction.
+Geometry has a
 working standalone `process_point_cloud()` entry point; rendering consumes
 supplied room/property geometry through `render_room()` and `render_property()`.
 See [docs/architecture.md](docs/architecture.md) for boundaries and future work.
@@ -67,17 +67,17 @@ The installed `property-scan` command takes the same arguments.
 
 | Mode | Current validation | Future acquisition work |
 | --- | --- | --- |
-| Photo | Directory with 2–8 immediate image files: jpg, jpeg, png, webp, heic, heif; extensions are case-insensitive | Decode, quality checks, room grouping |
+| Photo | Property directory with room folders; each room supplies 2–8 selected JPG/JPEG/PNG/HEIC images | Future room stitching and adjacency |
 | Video | Decodable MP4 or MOV; FFprobe metadata, bounded extraction, deterministic keyframes | App-specific intrinsic/IMU metadata adapters |
 | LiDAR | Canonical manifest: calibrated registered RGB-D, explicit depth units and rigid poses; legacy preparation accepts a nonempty directory | App-specific export adapters and registration/remapping |
 
-For photo and legacy LiDAR preparation, unrelated files in photo directories are ignored. Video preparation checks its path;
-video processing then validates and decodes the container. Canonical LiDAR processing
+Photo processing decodes and validates each room independently. Video processing
+validates and decodes its container. Canonical LiDAR processing
 additionally decodes frames and validates calibration, poses, registration
 declarations, depth values and dimensions as described below. Input media are
 referenced in place; reconstruction artifacts are written separately.
 
-A photo or legacy noncanonical LiDAR preparation command creates an empty `outputs/<capture_id>/` directory, prints
+A legacy noncanonical LiDAR preparation command creates an empty `outputs/<capture_id>/` directory, prints
 `Status: prepared_not_processed` and an explicit processing-not-implemented
 message, then exits with code 0. This means preparation succeeded, not that a
 property scan completed. Invalid input/configuration exits with code 2 and a
@@ -121,10 +121,10 @@ model download script makes an explicit network request only with `--video`.
 1. **Foundation (current):** package/configuration, adapters, shared stage
    interfaces, preparation CLI, logging, errors, startup tests, and a versioned
    unified result contract with JSON serialization and schema validation tests.
-2. **Acquisition (partially implemented):** canonical registered RGB-D decoding and
-   video decode/keyframe selection work. Photo acquisition, app adapters, and multi-room manifests remain future work.
+2. **Acquisition (partially implemented):** canonical RGB-D, video keyframes, and
+   photo room discovery/EXIF normalization work. App-specific capture adapters remain future work.
 3. **Reconstruction (partially implemented):** local CPU RGB-D fusion, shared
-   ICP/pose graphs, CPU COLMAP SfM, metric depth, and robust video scale recovery work; photo remains future work.
+   ICP/pose graphs, CPU COLMAP SfM, metric depth, and robust photo/video scale recovery work.
 4. **Geometry (partially implemented):** single-room metric point-cloud geometry
    works for reconstructed video and LiDAR; stitching and openings remain future work.
 5. **Analysis:** visible damage, repair/scope items, measurements, and validated
@@ -133,7 +133,7 @@ model download script makes an explicit network request only with `--video`.
    rendering work for supplied geometry, video, and canonical LiDAR. Benchmarking,
    and a UI remain future work.
 
-Photo reconstruction, Streamlit, benchmarking, database, authentication, mobile
+Photo-room stitching, Streamlit, benchmarking, database, authentication, mobile
 capture, and Docker are not included. Model weights are not committed or downloaded
 implicitly. Video users explicitly download one pinned indoor metric-depth model.
 
@@ -165,7 +165,41 @@ a plan. Internal residual improvements are **not benchmark accuracy**. Check
 
 For backward compatibility, LiDAR folders without a canonical manifest and without
 LiDAR processing flags retain preparation-only behavior. Explicit
-`--drift-correction` requires the canonical manifest. Photos remain preparation-only.
+`--drift-correction` requires the canonical manifest.
+
+## Photo reconstruction
+
+Organize a property as immediate room folders. Folder names become human-readable
+room labels; no semantic room classifier runs.
+
+```text
+inputs/property_01/
+├── living_room/
+│   ├── 01.jpg
+│   ├── 02.jpg
+│   └── 03.jpg
+└── bedroom/
+    ├── 01.heic
+    ├── 02.jpg
+    └── 03.png
+```
+
+Install the shared local reconstruction tools, HEIC decoder, and pinned metric
+depth checkpoint, then process rooms sequentially:
+
+```bash
+brew install ffmpeg colmap
+python -m pip install -e '.[dev,photo]'
+python scripts/download_models.py --photo
+python run.py --tier photo --input ./inputs/property_01
+```
+
+Each room is decoded with EXIF orientation, quality-ranked to 2–8 useful photos,
+reconstructed with exhaustive CPU COLMAP matching, aligned to metric depth, fused,
+and passed to the shared geometry engine and renderer. Failed rooms are reported
+without removing successful room outputs. Room polygons remain in independent
+local frames; no adjacency, positioning, or whole-property floor plan is claimed.
+See [docs/photo_pipeline.md](docs/photo_pipeline.md).
 
 ## Video reconstruction
 

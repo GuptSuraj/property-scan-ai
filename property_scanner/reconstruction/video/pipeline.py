@@ -125,7 +125,7 @@ def process_video(prepared: PreparationResult, config: VideoConfig, model_dir: P
                                                   scale.global_scale,config,int(Path(frame.filename).stem)))
         if len(keyframes)<config.min_registered_frames: raise ProcessingError('Too few scale-consistent frames for fusion')
         initial=[f.pose.copy() for f in keyframes]
-        save_poses(video/'initial_poses.json',keyframes,initial)
+        save_poses(video/'initial_poses.json',keyframes,initial,coordinate_system='sfm_metric_arbitrary_orientation')
         poses=initial
         if config.enable_icp_refinement:
             logger.info('Refining trajectory with shared ICP and pose graph')
@@ -137,7 +137,7 @@ def process_video(prepared: PreparationResult, config: VideoConfig, model_dir: P
             o3d.io.write_pose_graph(str(diagnostics/'pose_graph.json'),graph)
             if fallback: warnings.append(ResultWarning(code='ICP_NEIGHBOR_REJECTED',message=f'{fallback} rejected registrations use weak SfM pose priors.'))
             modules.append('shared_icp_pose_graph')
-        save_poses(video/'optimized_poses.json',keyframes,poses)
+        save_poses(video/'optimized_poses.json',keyframes,poses,coordinate_system='sfm_metric_arbitrary_orientation')
         trajectory_plot(diagnostics/'trajectory.png',keyframes,poses)
         logger.info('Fusing video reconstruction')
         fuse(keyframes,poses,config.registration,video/'fused_metric_sfm.ply')

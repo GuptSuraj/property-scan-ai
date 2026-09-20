@@ -208,13 +208,14 @@ automatically trusted or interpreted by core consumers.
 `PropertyScanPipeline.process()` now returns `PropertyScanResult` in its type
 contract for every tier. `ScanContext.result` is initially `None`, enabling future
 stages to pass an actual result to downstream consumers without inventing one.
-Photo reconstruction still raises `NotImplementedError`. Canonical LiDAR RGB-D
-and metric video reconstruction populate this contract with genuinely available
+Independent-room photo, canonical LiDAR RGB-D, and metric video reconstruction
+populate this contract with genuinely available
 geometry, provenance, and processing warnings; see [lidar_pipeline.md](lidar_pipeline.md)
-and [video_pipeline.md](video_pipeline.md).
+and [video_pipeline.md](video_pipeline.md). Photo room coordinates are explicitly
+local and unstitched; no connections or property footprint are inferred.
 Geometry has a standalone point-cloud entry point;
 the renderer consumes supplied geometry and can export a real context result.
 See [floorplan_renderer.md](floorplan_renderer.md). The CLI processes canonical
-LiDAR captures and MP4/MOV video while photo remains preparation-only. Result serialization is
+LiDAR captures, MP4/MOV video, and photo properties. Result serialization is
 shared by all consumers. The schema sample fixture is marked synthetic at root level,
 in a structured warning, and in observation notes.

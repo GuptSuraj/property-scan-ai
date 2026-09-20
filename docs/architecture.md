@@ -8,7 +8,7 @@ depth, poses, calibration, and metric scale. `BaseInputAdapter` exposes
 `validate()`, `load()`, and `prepare()` so each format owns its input rules.
 Both `load()` and `prepare()` validate before returning a `NormalizedCapture`.
 The adapter factory handles input preparation; the central pipeline additionally
-dispatches metric video and canonical LiDAR reconstruction. Downstream geometry/rendering remain
+dispatches independent-room photo, metric video, and canonical LiDAR reconstruction. Downstream geometry/rendering remain
 independent of the acquisition tier.
 
 `NormalizedCapture` contains a UUID, tier, source path, UTC ingestion time,
@@ -31,9 +31,9 @@ no JSON or processing output.
 
 `PropertyScanPipeline.process(prepared)` defines the shared stage order:
 reconstruction, geometry, stitching, openings, damage, measurements, confidence,
-and rendering. Canonical LiDAR dispatches to the RGB-D backend and video dispatches
-to CPU COLMAP, local metric depth, robust scale recovery, and shared fusion;
-photo reconstruction still raises `NotImplementedError`.
+and rendering. Canonical LiDAR dispatches to the RGB-D backend. Video and photo
+rooms dispatch to CPU COLMAP, local metric depth, robust scale recovery, and shared
+fusion. Photo rooms remain in local frames until a future stitching phase.
 Acquisition-dependent stages still raise through their `run()` interfaces. The geometry
 module now also provides a standalone `process_point_cloud()` entry point for
 already reconstructed metric clouds; see [geometry_engine.md](geometry_engine.md).
@@ -44,11 +44,12 @@ see [floorplan_renderer.md](floorplan_renderer.md). Its stage adapter requires a
 real `ScanContext.result`, and otherwise raises. No empty geometry,
 zero-valued measurements, or arbitrary confidence scores stand in for real work.
 
-The CLI prepares all inputs and processes videos and canonical LiDAR captures
+The CLI prepares all inputs and processes photo properties, videos, and canonical LiDAR captures
 through the shared `process()` entry point. Both backends reuse the existing geometry
 engine and renderer and return the same unified result model; they do not
 duplicate those algorithms. See [lidar_pipeline.md](lidar_pipeline.md) and
-[video_pipeline.md](video_pipeline.md). For photo and legacy preparation-only inputs, exit code 0 reports preparation;
+[video_pipeline.md](video_pipeline.md) and [photo_pipeline.md](photo_pipeline.md).
+For legacy LiDAR preparation-only inputs, exit code 0 reports preparation;
 normal input/configuration errors report code 2 without a traceback. Python
 callers receive application exceptions. There is no filesystem mutation on
 package import or settings load.
@@ -58,7 +59,7 @@ package import or settings load.
 | Boundary | Owns | Must not own |
 | --- | --- | --- |
 | Acquisition (`inputs/`) | Discovery, format validation, future decoding/frame selection and calibration loading | Floor areas, damage, or rendering |
-| Reconstruction (`reconstruction/`) | Canonical RGB-D, video keyframes, CPU SfM, metric depth/scale, bounded point clouds, fusion, ICP/pose graphs; future photo backend | Repair scope or display formatting |
+| Reconstruction (`reconstruction/`) | Canonical RGB-D, photo/video CPU SfM, metric depth/scale, bounded point clouds, fusion, ICP/pose graphs | Repair scope or display formatting |
 | Geometry (`geometry/`) | Implemented single-room point-cloud planes, wall intersections, polygons and metric measurements | Capture codecs, reconstruction, stitching |
 | Stitching (`stitching/`) | Future inter-room transforms and property coordinate alignment | Independent copies of measurement logic |
 | Semantic analysis (`openings/`, `damage/`) | Future doors/windows/openings, visible damage regions, repair/scope suggestions | Invented dimensions or unsupported hidden damage |
@@ -90,8 +91,8 @@ and produce and raise `ProcessingError` for operational failures. A new backend
 must not add sensor-specific branches to measurement or rendering code.
 
 Before introducing geometry, agree on coordinate frames, transforms, metric
-units, scale observability, and evidence provenance. Photo captures may lack
-absolute scale; video resolves it only with robust depth/SfM support and otherwise
+units, scale observability, and evidence provenance. Photo and video resolve scale
+only with robust depth/SfM support and otherwise
 keeps measurements unavailable. Multi-room
 capture grouping and manifests are deferred; current photo validation describes
 one room only.
@@ -101,8 +102,8 @@ The versioned `PropertyScanResult` and JSON utilities are now implemented; see
 surfaces, ceiling heights, openings, property connections, visible damage,
 rule-backed concealed-damage flags, scope quantities, warnings, and provenance.
 Missing measurements stay null and interval coverage is separate from a quality
-score. `PropertyScanPipeline.process()` returns this model for implemented video
-and canonical LiDAR backends. Photo still raises at reconstruction. Even if all
+score. `PropertyScanPipeline.process()` returns this model for implemented photo,
+video, and canonical LiDAR backends. Even if all
 stage placeholders are bypassed, missing result assembly raises rather than
 returning fake data.
 

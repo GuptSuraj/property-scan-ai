@@ -167,7 +167,7 @@ def run_cli(tmp_path: Path, *args: str) -> subprocess.CompletedProcess[str]:
 @pytest.mark.parametrize("tier", ["photo", "video", "lidar"])
 def test_cli_tiers(tmp_path: Path, tier: str) -> None:
     source = make_source(tmp_path, tier)
-    result = run_cli(tmp_path, "--tier", tier, "--input", str(source))
+    result = run_cli(tmp_path, "--tier", tier, "--input", str(source), "--prepare-only")
     assert result.returncode == 0, result.stderr
     assert "prepared_not_processed" in result.stdout
     assert "not implemented" in result.stdout

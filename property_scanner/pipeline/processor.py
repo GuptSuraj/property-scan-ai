@@ -15,13 +15,15 @@ from property_scanner.reconstruction.base import SceneReconstructor
 from property_scanner.rendering.floorplan import FloorPlanRenderer
 from property_scanner.schemas.common import PreparationResult
 from property_scanner.schemas.result import PropertyScanResult
+from property_scanner.reconstruction.lidar.models import LidarConfig
 from property_scanner.stitching.engine import StitchingEngine
+from property_scanner.reconstruction.video.models import VideoConfig
 
 logger = logging.getLogger(__name__)
 
 
 class PropertyScanPipeline:
-    """One orchestrator for all tiers; only prepare() works in this phase."""
+    """Shared entry point for preparation, metric video, and canonical LiDAR."""
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
@@ -46,12 +48,22 @@ class PropertyScanPipeline:
         logger.info("Output directory created: %s", output_dir)
         return PreparationResult(capture=capture, output_dir=output_dir)
 
-    def process(self, prepared: PreparationResult) -> PropertyScanResult:
-        """Reserved downstream flow; currently raises at reconstruction.
-
-        The CLI intentionally calls only prepare(). No success-shaped scan result
-        can be returned by the unimplemented stages.
-        """
+    def process(self, prepared: PreparationResult, *, lidar_config: LidarConfig | None = None, video_config: VideoConfig | None = None) -> PropertyScanResult:
+        """Dispatch implemented reconstruction modes into shared downstream stages."""
+        if prepared.capture.tier == "lidar" and ((prepared.capture.source_path / "manifest.json").is_file() or lidar_config is not None):
+            try:
+                from property_scanner.reconstruction.lidar.pipeline import process_lidar
+            except ImportError as exc:
+                from property_scanner.core.exceptions import ConfigurationError
+                raise ConfigurationError("Install LiDAR dependencies: pip install -e '.[lidar]'") from exc
+            return process_lidar(prepared, lidar_config or LidarConfig())
+        if prepared.capture.tier == "video" and video_config is not None:
+            try:
+                from property_scanner.reconstruction.video.pipeline import process_video
+            except ImportError as exc:
+                from property_scanner.core.exceptions import ConfigurationError
+                raise ConfigurationError("Install video dependencies: pip install -e '.[video]'") from exc
+            return process_video(prepared, video_config, self.settings.model_dir)
         context = ScanContext(capture=prepared.capture, output_dir=prepared.output_dir)
         for stage in self.stages:
             context = stage.run(context)

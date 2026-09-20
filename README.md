@@ -5,10 +5,11 @@ walkthrough video, and exported LiDAR data. The long-term goal is a stitched 2D
 floor plan, room dimensions, wall lengths, floor area, ceiling height, openings,
 visible damage, repair/scope items, confidence intervals, and structured JSON.
 
-**Current status: foundation, unified data contract, core point-cloud geometry,
-and a dimensioned PNG/SVG floor-plan renderer. Reconstruction and AI processing
-are not implemented yet.**
-The capture CLI remains preparation-only. A separate development command can
+**Current status: local metric video reconstruction, canonical LiDAR/RGB-D
+reconstruction with optional drift correction, unified JSON, point-cloud geometry,
+and dimensioned PNG/SVG plans.** Photo reconstruction and damage AI remain
+unimplemented. Video and canonical LiDAR captures now process end to end when
+their external dependencies and required inputs are available. A development command can
 measure an already reconstructed metric single-room `.ply`/`.pcd` cloud.
 Validated result objects can be saved/loaded as JSON and the schema exported.
 
@@ -24,15 +25,17 @@ LiDAR ───┘
 ```
 
 All inputs share `PropertyScanPipeline`. Only adapters inspect the input tier.
-The capture pipeline stops at unimplemented reconstruction. Geometry has a
+The shared pipeline dispatches video and canonical RGB-D reconstruction while
+photo reconstruction remains unavailable. Geometry has a
 working standalone `process_point_cloud()` entry point; rendering consumes
 supplied room/property geometry through `render_room()` and `render_property()`.
 See [docs/architecture.md](docs/architecture.md) for boundaries and future work.
 
 ## Setup
 
-Use Python 3.11. No NVIDIA GPU, Xcode compilation, or heavy AI dependencies are
-required by this foundation. CPU is sufficient; no hardware backend is selected.
+Use Python 3.11. Foundation, rendering, geometry, and LiDAR do not require an
+NVIDIA GPU. Video depth uses Apple MPS when available and otherwise uses CPU;
+COLMAP is explicitly configured for CPU feature extraction and matching.
 
 ```bash
 python3.11 -m venv .venv
@@ -65,15 +68,16 @@ The installed `property-scan` command takes the same arguments.
 | Mode | Current validation | Future acquisition work |
 | --- | --- | --- |
 | Photo | Directory with 2–8 immediate image files: jpg, jpeg, png, webp, heic, heif; extensions are case-insensitive | Decode, quality checks, room grouping |
-| Video | File with mp4, mov, m4v, avi, or mkv extension | Decode and select walkthrough frames |
-| LiDAR | Directory with at least one non-hidden file, including nested files | Validate exported RGB-D, depth, poses, intrinsics, units, and alignment |
+| Video | Decodable MP4 or MOV; FFprobe metadata, bounded extraction, deterministic keyframes | App-specific intrinsic/IMU metadata adapters |
+| LiDAR | Canonical manifest: calibrated registered RGB-D, explicit depth units and rigid poses; legacy preparation accepts a nonempty directory | App-specific export adapters and registration/remapping |
 
-Unrelated files in photo directories are ignored. Supported extensions are a
-path-validation policy, not a promise that a codec is installed. Files are opened
-only to check readability; content, empty/corrupt media, calibration, and LiDAR
-completeness are **not** validated. Inputs are referenced in place, never copied.
+For photo and legacy LiDAR preparation, unrelated files in photo directories are ignored. Video preparation checks its path;
+video processing then validates and decodes the container. Canonical LiDAR processing
+additionally decodes frames and validates calibration, poses, registration
+declarations, depth values and dimensions as described below. Input media are
+referenced in place; reconstruction artifacts are written separately.
 
-A valid command creates an empty `outputs/<capture_id>/` directory, prints
+A photo or legacy noncanonical LiDAR preparation command creates an empty `outputs/<capture_id>/` directory, prints
 `Status: prepared_not_processed` and an explicit processing-not-implemented
 message, then exits with code 0. This means preparation succeeded, not that a
 property scan completed. Invalid input/configuration exits with code 2 and a
@@ -107,34 +111,94 @@ pytest
 python scripts/download_models.py
 ```
 
-Tests cover imports, all adapters, file/type validation, settings, unique output
-allocation, explicit unimplemented stages, the CLI via subprocesses, data model
-constraints, references, JSON round trips, and generated JSON Schema. They
-use temporary path fixtures, not real reconstruction datasets. The download
-script only explains that model downloading is not implemented; it makes no
-network requests.
+Tests cover imports, adapters, validation, settings, JSON contracts, synthetic
+geometry/LiDAR/video reconstruction, robust video scale recovery, and rendering.
+Synthetic fixtures test algorithms and do not establish real-world accuracy. The
+model download script makes an explicit network request only with `--video`.
 
 ## Limitations and planned phases
 
 1. **Foundation (current):** package/configuration, adapters, shared stage
    interfaces, preparation CLI, logging, errors, startup tests, and a versioned
    unified result contract with JSON serialization and schema validation tests.
-2. **Acquisition:** actual decoding, media quality checks, multi-room manifests,
-   and a documented LiDAR interchange format.
-3. **Reconstruction:** real scene reconstruction and sensor-specific backends
-   behind shared interfaces, with local CPU/MPS feasibility evaluated first.
+2. **Acquisition (partially implemented):** canonical registered RGB-D decoding and
+   video decode/keyframe selection work. Photo acquisition, app adapters, and multi-room manifests remain future work.
+3. **Reconstruction (partially implemented):** local CPU RGB-D fusion, shared
+   ICP/pose graphs, CPU COLMAP SfM, metric depth, and robust video scale recovery work; photo remains future work.
 4. **Geometry (partially implemented):** single-room metric point-cloud geometry
-   now works; reconstruction, scale recovery, stitching, and openings remain future work.
+   works for reconstructed video and LiDAR; stitching and openings remain future work.
 5. **Analysis:** visible damage, repair/scope items, measurements, and validated
    confidence intervals.
 6. **Outputs (partially implemented):** JSON serialization and dimensioned PNG/SVG
-   rendering work for supplied geometry. Capture-pipeline integration, benchmarking,
+   rendering work for supplied geometry, video, and canonical LiDAR. Benchmarking,
    and a UI remain future work.
 
-No COLMAP, depth estimation, LiDAR fusion, capture reconstruction, AI models,
-Streamlit, benchmarking, database, authentication, mobile app, or Docker is
-included. There are no model weights and no automatic model downloads. Large
-scientific/AI dependencies will be added only when a concrete stage needs them.
+Photo reconstruction, Streamlit, benchmarking, database, authentication, mobile
+capture, and Docker are not included. Model weights are not committed or downloaded
+implicitly. Video users explicitly download one pinned indoor metric-depth model.
+
+## Canonical LiDAR / RGB-D pipeline
+
+Use the documented generic export format with registered RGB/depth, real pinhole
+intrinsics, explicit depth units, and declared device pose/coordinate conventions.
+No app-specific export layout is guessed. See [docs/lidar_pipeline.md](docs/lidar_pipeline.md).
+
+```bash
+python -m pip install -e '.[dev,lidar]'
+python scripts/generate_synthetic_lidar_capture.py
+python run.py --tier lidar --input ./inputs/synthetic_lidar --drift-correction on
+python run.py --tier lidar --input ./inputs/synthetic_lidar --drift-correction off
+```
+
+The generator creates synthetic algorithm-test data and refuses to overwrite an
+existing capture; use `--output` for a fresh destination. ON (the canonical default)
+preserves device-pose fusion, runs validated ICP/loop closures and global pose-graph
+optimization, and exports both branches. OFF never runs correction. Each command
+uses a new output UUID and retains the source capture UUID in metadata.
+
+Outputs include `result.json`, raw/corrected clouds and poses under `lidar/`, mode
+floor plans and internal metrics under `ablation/`, and effective configuration.
+The selected plan is also saved as `floorplan.png`/`.svg`. Missing geometry leaves
+reconstruction artifacts intact and records processing errors instead of fabricating
+a plan. Internal residual improvements are **not benchmark accuracy**. Check
+`processing_info.errors`; exit 0 can include a partial downstream result.
+
+For backward compatibility, LiDAR folders without a canonical manifest and without
+LiDAR processing flags retain preparation-only behavior. Explicit
+`--drift-correction` requires the canonical manifest. Photos remain preparation-only.
+
+## Video reconstruction
+
+Video mode requires local FFmpeg/FFprobe, CPU-capable COLMAP, and the pinned Depth
+Anything V2 Small indoor metric checkpoint:
+
+```bash
+brew install ffmpeg colmap
+python -m pip install -e '.[dev,video]'
+python scripts/download_models.py --video
+python run.py --tier video --input ./inputs/walkthrough.mp4
+```
+
+MP4 and MOV are supported. Candidate frames are autorotated, sampled, and filtered
+for darkness, severe blur, and near duplication. CPU COLMAP estimates an
+arbitrary-scale sparse reconstruction. Metric depth is inferred once per selected
+registered keyframe on Apple MPS or CPU, and sparse SfM observations robustly align
+that reconstruction to meters. Camera translations and sparse points receive the
+scale; rotations do not.
+
+The pipeline then reuses the LiDAR ICP/pose-graph and fusion components, the shared
+geometry engine, renderer, and `PropertyScanResult`. If metric scale cannot be
+resolved, it retains relative SfM diagnostics and emits no measurements or floor
+plan. See [docs/video_pipeline.md](docs/video_pipeline.md) for configuration,
+coordinate conventions, outputs, failure behavior, and limitations.
+
+Useful overrides are `--extraction-fps`, `--max-keyframes`,
+`--no-registration-refinement`, and `--video-config`. A convenience smoke command
+uses developer-supplied footage and never downloads sample media:
+
+```bash
+python scripts/test_video_pipeline.py --input ./inputs/walkthrough.mp4
+```
 
 ## Core geometry engine
 

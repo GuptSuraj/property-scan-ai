@@ -15,6 +15,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+video = ["open3d>=0.18,<0.20", "numpy>=1.26,<3", "scipy>=1.11,<2", "shapely>=2,<3", "matplotlib>=3.8,<4", "pillow>=10,<13", "opencv-python-headless>=4.9,<5", "torch>=2.4,<3", "transformers>=4.46,<5", "huggingface-hub>=0.26,<1"]
+lidar = ["open3d>=0.18,<0.20", "numpy>=1.26,<3", "scipy>=1.11,<2", "shapely>=2,<3", "matplotlib>=3.8,<4", "pillow>=10,<13"]
 rendering = ["numpy>=1.26,<3", "shapely>=2,<3", "matplotlib>=3.8,<4"]
 geometry = ["open3d>=0.18,<0.20", "numpy>=1.26,<3", "shapely>=2,<3", "matplotlib>=3.8,<4"]
 dev = ["pytest>=8,<10", "jsonschema>=4.20,<5"]

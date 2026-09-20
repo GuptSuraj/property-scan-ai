@@ -8,10 +8,10 @@ from property_scanner.schemas.common import InputTier
 
 
 class VideoInputAdapter(BaseInputAdapter):
-    """Reference a video file; frame extraction belongs to a later phase."""
+    """Reference an officially supported walkthrough-video container."""
 
     tier = InputTier.VIDEO
-    extensions = frozenset({".mp4", ".mov", ".m4v", ".avi", ".mkv"})
+    extensions = frozenset({".mp4", ".mov"})
 
     def validate(self) -> None:
         self._require_exists()

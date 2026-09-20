@@ -7,7 +7,9 @@ video needs frame selection and timestamps, and LiDAR exports may supply RGB,
 depth, poses, calibration, and metric scale. `BaseInputAdapter` exposes
 `validate()`, `load()`, and `prepare()` so each format owns its input rules.
 Both `load()` and `prepare()` validate before returning a `NormalizedCapture`.
-The adapter factory is the only tier dispatch point in this foundation.
+The adapter factory handles input preparation; the central pipeline additionally
+dispatches metric video and canonical LiDAR reconstruction. Downstream geometry/rendering remain
+independent of the acquisition tier.
 
 `NormalizedCapture` contains a UUID, tier, source path, UTC ingestion time,
 JSON-compatible metadata, and source-file references. Its `prepared_files`
@@ -29,7 +31,9 @@ no JSON or processing output.
 
 `PropertyScanPipeline.process(prepared)` defines the shared stage order:
 reconstruction, geometry, stitching, openings, damage, measurements, confidence,
-and rendering. It currently raises `NotImplementedError` at reconstruction.
+and rendering. Canonical LiDAR dispatches to the RGB-D backend and video dispatches
+to CPU COLMAP, local metric depth, robust scale recovery, and shared fusion;
+photo reconstruction still raises `NotImplementedError`.
 Acquisition-dependent stages still raise through their `run()` interfaces. The geometry
 module now also provides a standalone `process_point_cloud()` entry point for
 already reconstructed metric clouds; see [geometry_engine.md](geometry_engine.md).
@@ -40,7 +44,11 @@ see [floorplan_renderer.md](floorplan_renderer.md). Its stage adapter requires a
 real `ScanContext.result`, and otherwise raises. No empty geometry,
 zero-valued measurements, or arbitrary confidence scores stand in for real work.
 
-The CLI calls only `prepare()`. Exit code 0 reports successful preparation;
+The CLI prepares all inputs and processes videos and canonical LiDAR captures
+through the shared `process()` entry point. Both backends reuse the existing geometry
+engine and renderer and return the same unified result model; they do not
+duplicate those algorithms. See [lidar_pipeline.md](lidar_pipeline.md) and
+[video_pipeline.md](video_pipeline.md). For photo and legacy preparation-only inputs, exit code 0 reports preparation;
 normal input/configuration errors report code 2 without a traceback. Python
 callers receive application exceptions. There is no filesystem mutation on
 package import or settings load.
@@ -50,7 +58,7 @@ package import or settings load.
 | Boundary | Owns | Must not own |
 | --- | --- | --- |
 | Acquisition (`inputs/`) | Discovery, format validation, future decoding/frame selection and calibration loading | Floor areas, damage, or rendering |
-| Reconstruction (`reconstruction/`) | Future observations/poses/depth to a common scene, including scale provenance | Repair scope or display formatting |
+| Reconstruction (`reconstruction/`) | Canonical RGB-D, video keyframes, CPU SfM, metric depth/scale, bounded point clouds, fusion, ICP/pose graphs; future photo backend | Repair scope or display formatting |
 | Geometry (`geometry/`) | Implemented single-room point-cloud planes, wall intersections, polygons and metric measurements | Capture codecs, reconstruction, stitching |
 | Stitching (`stitching/`) | Future inter-room transforms and property coordinate alignment | Independent copies of measurement logic |
 | Semantic analysis (`openings/`, `damage/`) | Future doors/windows/openings, visible damage regions, repair/scope suggestions | Invented dimensions or unsupported hidden damage |
@@ -82,8 +90,9 @@ and produce and raise `ProcessingError` for operational failures. A new backend
 must not add sensor-specific branches to measurement or rendering code.
 
 Before introducing geometry, agree on coordinate frames, transforms, metric
-units, scale observability, and evidence provenance. Photo/video captures may
-lack absolute scale; unavailable dimensions must remain unavailable. Multi-room
+units, scale observability, and evidence provenance. Photo captures may lack
+absolute scale; video resolves it only with robust depth/SfM support and otherwise
+keeps measurements unavailable. Multi-room
 capture grouping and manifests are deferred; current photo validation describes
 one room only.
 
@@ -92,12 +101,13 @@ The versioned `PropertyScanResult` and JSON utilities are now implemented; see
 surfaces, ceiling heights, openings, property connections, visible damage,
 rule-backed concealed-damage flags, scope quantities, warnings, and provenance.
 Missing measurements stay null and interval coverage is separate from a quality
-score. `PropertyScanPipeline.process()` is typed to return this same model for
-every tier, but still raises at reconstruction. Even if all stage placeholders
-are bypassed, missing result assembly raises rather than returning fake data.
+score. `PropertyScanPipeline.process()` returns this model for implemented video
+and canonical LiDAR backends. Photo still raises at reconstruction. Even if all
+stage placeholders are bypassed, missing result assembly raises rather than
+returning fake data.
 
-Future stages will assemble the result after confidence estimation and before
-rendering. The renderer already consumes that same geometry model without
+Implemented capture pipelines assemble only supported fields and leave semantic
+analysis collections empty. The renderer consumes that same geometry model without
 calculating wall lengths, area, or ceiling height. JSON export serializes only supplied, validated objects;
 it does not perform analysis. A preparation receipt remains a separate type and
 must never be mistaken for a property scan result.
@@ -105,6 +115,6 @@ must never be mistaken for a property scan result.
 This approach keeps input formats isolated while sharing all downstream rules.
 Future backends can be swapped independently without duplicating a complete app
 for each acquisition mode. CPU and Apple MPS implementations can be evaluated
-per stage within a local-first, 16 GB memory budget. Geometry uses optional,
-lazily loaded CPU Open3D, NumPy, Shapely, and matplotlib; nothing requires a GPU
-or loads model weights.
+per stage within a local-first, 16 GB memory budget. Geometry uses optional CPU
+Open3D, NumPy, Shapely, and matplotlib. Video depth loads its explicitly cached
+model once and selects Apple MPS or CPU; no module requires CUDA.

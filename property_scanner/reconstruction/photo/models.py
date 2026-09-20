@@ -8,6 +8,7 @@ from pydantic import Field, JsonValue, model_validator
 from property_scanner.reconstruction.lidar.models import CameraIntrinsics, LidarConfig
 from property_scanner.reconstruction.video.models import DEPTH_MODEL, DEPTH_REVISION
 from property_scanner.schemas.base import ContractModel
+from property_scanner.stitching.models import StitchingConfig
 
 
 class PhotoConfig(ContractModel):
@@ -45,6 +46,8 @@ class PhotoConfig(ContractModel):
     point_cloud_pixel_stride: int = Field(default=3, ge=1, le=16)
     enable_icp_refinement: bool = False
     enable_loop_closure: bool = False
+    enable_property_stitching: bool = True
+    stitching: StitchingConfig = Field(default_factory=StitchingConfig)
     orientation_min_up_coherence: float = Field(default=0.6, gt=0, le=1)
     registration: LidarConfig = Field(default_factory=LidarConfig)
 
@@ -92,4 +95,3 @@ class PreparedRoomImages(ContractModel):
     images_rejected: int
     same_camera_supported: bool = False
     warning_codes: list[str] = Field(default_factory=list)
-

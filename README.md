@@ -5,9 +5,9 @@ walkthrough video, and exported LiDAR data. The long-term goal is a stitched 2D
 floor plan, room dimensions, wall lengths, floor area, ceiling height, openings,
 visible damage, repair/scope items, confidence intervals, and structured JSON.
 
-**Current status: independent-room metric photo reconstruction, local metric video reconstruction, canonical LiDAR/RGB-D
+**Current status: metric photo reconstruction with evidence-based single-floor room stitching, local metric video reconstruction, canonical LiDAR/RGB-D
 reconstruction with optional drift correction, unified JSON, point-cloud geometry,
-and dimensioned PNG/SVG plans.** Damage AI and multi-room stitching remain
+and dimensioned PNG/SVG plans.** Damage AI and semantic opening detection remain
 unimplemented. Photo rooms, video, and canonical LiDAR captures process when
 their external dependencies and required inputs are available. A development command can
 measure an already reconstructed metric single-room `.ply`/`.pcd` cloud.
@@ -67,7 +67,7 @@ The installed `property-scan` command takes the same arguments.
 
 | Mode | Current validation | Future acquisition work |
 | --- | --- | --- |
-| Photo | Property directory with room folders; each room supplies 2–8 selected JPG/JPEG/PNG/HEIC images | Future room stitching and adjacency |
+| Photo | Property directory with room folders; each room supplies 2–8 selected JPG/JPEG/PNG/HEIC images; verified transition views support stitching | Semantic doors/windows and multi-storey layout |
 | Video | Decodable MP4 or MOV; FFprobe metadata, bounded extraction, deterministic keyframes | App-specific intrinsic/IMU metadata adapters |
 | LiDAR | Canonical manifest: calibrated registered RGB-D, explicit depth units and rigid poses; legacy preparation accepts a nonempty directory | App-specific export adapters and registration/remapping |
 
@@ -125,15 +125,15 @@ model download script makes an explicit network request only with `--video`.
    photo room discovery/EXIF normalization work. App-specific capture adapters remain future work.
 3. **Reconstruction (partially implemented):** local CPU RGB-D fusion, shared
    ICP/pose graphs, CPU COLMAP SfM, metric depth, and robust photo/video scale recovery work.
-4. **Geometry (partially implemented):** single-room metric point-cloud geometry
-   works for reconstructed video and LiDAR; stitching and openings remain future work.
+4. **Geometry (partially implemented):** metric point-cloud geometry and rigid,
+   evidence-based single-floor photo room stitching work; semantic openings remain future work.
 5. **Analysis:** visible damage, repair/scope items, measurements, and validated
    confidence intervals.
 6. **Outputs (partially implemented):** JSON serialization and dimensioned PNG/SVG
    rendering work for supplied geometry, video, and canonical LiDAR. Benchmarking,
    and a UI remain future work.
 
-Photo-room stitching, Streamlit, benchmarking, database, authentication, mobile
+Multi-storey stitching, Streamlit, benchmarking, database, authentication, mobile
 capture, and Docker are not included. Model weights are not committed or downloaded
 implicitly. Video users explicitly download one pinned indoor metric-depth model.
 
@@ -197,9 +197,19 @@ python run.py --tier photo --input ./inputs/property_01
 Each room is decoded with EXIF orientation, quality-ranked to 2–8 useful photos,
 reconstructed with exhaustive CPU COLMAP matching, aligned to metric depth, fused,
 and passed to the shared geometry engine and renderer. Failed rooms are reported
-without removing successful room outputs. Room polygons remain in independent
-local frames; no adjacency, positioning, or whole-property floor plan is claimed.
-See [docs/photo_pipeline.md](docs/photo_pipeline.md).
+without removing successful room outputs. For multiple successful rooms, verified
+cross-room transition views drive a rigid shared-property layout. Capture doorway
+views in both neighboring room folders. Missing evidence leaves rooms local and
+does not produce an unsupported whole-property plan. Successful stitching adds
+root `floorplan.png` and `floorplan.svg`; per-room plans remain available. See
+[docs/photo_pipeline.md](docs/photo_pipeline.md) and
+[docs/multi_room_stitching.md](docs/multi_room_stitching.md).
+
+Rerun stitching from cached room artifacts without COLMAP or depth inference:
+
+```bash
+python scripts/test_stitching.py --input ./outputs/<capture_id>
+```
 
 ## Video reconstruction
 

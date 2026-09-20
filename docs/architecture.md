@@ -33,7 +33,8 @@ no JSON or processing output.
 reconstruction, geometry, stitching, openings, damage, measurements, confidence,
 and rendering. Canonical LiDAR dispatches to the RGB-D backend. Video and photo
 rooms dispatch to CPU COLMAP, local metric depth, robust scale recovery, and shared
-fusion. Photo rooms remain in local frames until a future stitching phase.
+fusion. Photo rooms remain local reconstruction artifacts; verified cross-room
+metric feature correspondences feed the implemented rigid single-floor stitcher.
 Acquisition-dependent stages still raise through their `run()` interfaces. The geometry
 module now also provides a standalone `process_point_cloud()` entry point for
 already reconstructed metric clouds; see [geometry_engine.md](geometry_engine.md).
@@ -61,7 +62,7 @@ package import or settings load.
 | Acquisition (`inputs/`) | Discovery, format validation, future decoding/frame selection and calibration loading | Floor areas, damage, or rendering |
 | Reconstruction (`reconstruction/`) | Canonical RGB-D, photo/video CPU SfM, metric depth/scale, bounded point clouds, fusion, ICP/pose graphs | Repair scope or display formatting |
 | Geometry (`geometry/`) | Implemented single-room point-cloud planes, wall intersections, polygons and metric measurements | Capture codecs, reconstruction, stitching |
-| Stitching (`stitching/`) | Future inter-room transforms and property coordinate alignment | Independent copies of measurement logic |
+| Stitching (`stitching/`) | Cross-room evidence, SE(2) graph layout, robust optimization, overlap validation, and property footprint | Independent measurement logic or room rescaling |
 | Semantic analysis (`openings/`, `damage/`) | Future doors/windows/openings, visible damage regions, repair/scope suggestions | Invented dimensions or unsupported hidden damage |
 | Measurement (`measurements/`) | Future physical quantities derived from scaled geometry | UI formatting or sensor-specific decoding |
 | Confidence (`confidence/`) | Future uncertainty and provenance based on actual evidence | Arbitrary fixed confidence values |

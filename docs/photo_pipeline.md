@@ -1,9 +1,10 @@
 # Photo reconstruction pipeline
 
 Photo mode reconstructs each room independently and passes its metric point cloud
-to the existing geometry engine and floor-plan renderer. Room coordinates remain
-local. This phase does not infer adjacency, position rooms together, or create a
-whole-property plan.
+to the existing geometry engine and floor-plan renderer. For multiple successful
+rooms it then attempts evidence-based rigid stitching into one property frame.
+Failed or disconnected layouts retain local per-room outputs and do not fabricate
+a whole-property plan.
 
 ```text
 Room Photos
@@ -25,6 +26,10 @@ Floor-supported canonical Z-up orientation
 Existing GeometryEngine → room polygon and measurements
     ↓
 Existing FloorPlanRenderer → per-room PNG/SVG
+    ↓
+Cross-room verified features + metric depth → SE(2) room graph
+    ↓
+Existing FloorPlanRenderer → whole-property PNG/SVG when valid
 ```
 
 ## Input layout
@@ -108,11 +113,29 @@ with floor near Z=0. No north direction is inferred. `GeometryEngine` alone
 calculates walls, corners, polygon, wall lengths, floor area, and ceiling height.
 `FloorPlanRenderer` only draws that typed geometry.
 
+Room stitching reuses saved selected images, depth maps, intrinsics, canonical
+poses, and room clouds. SIFT matches are geometrically verified, back-projected
+to metric 3D correspondences, and fitted with fixed-scale SE(2) RANSAC. A robust
+room-graph optimizer may rotate and translate rooms but cannot resize them. See
+[multi_room_stitching.md](multi_room_stitching.md).
+
 ```text
 outputs/<capture_id>/
 ├── result.json
 ├── photo_summary.json
 ├── processing_config.json
+├── floorplan.png                 # only when the whole layout is valid
+├── floorplan.svg                 # only when the whole layout is valid
+├── stitching/
+│   ├── candidate_connections.json
+│   ├── accepted_connections.json
+│   ├── rejected_connections.json
+│   ├── initial_room_transforms.json
+│   ├── optimized_room_transforms.json
+│   ├── room_graph.json
+│   ├── layout_metrics.json
+│   ├── overlap_report.json
+│   └── *.png
 ├── photo/<room_id>/
 │   ├── selected_images/
 │   ├── depth/*.npy
@@ -136,11 +159,10 @@ outputs/<capture_id>/
     └── geometry/
 ```
 
-The root result contains every successful room. Its property metadata explicitly
-sets `coordinate_scope=room_local_unstitched` and `stitching_performed=false`.
-No property footprint, room connections, openings, damage, or scope items are
-invented. Total area, when present, is only the sum of measured independent room
-areas.
+When all successful rooms have a valid layout, the root result contains their
+positioned property-frame geometry, inferred graph connections, union footprint,
+and unchanged summed room area. Otherwise it retains room-local geometry and
+explicit warnings. Openings, damage, and scope items remain empty.
 
 ## Installation and commands
 
@@ -166,6 +188,7 @@ These are recommendations, not hard validation rules.
 Photo mode can struggle with two views, poor overlap, blank walls, mirrors, glass,
 low light, repeated textures, small rooms, strong unmodeled lens distortion,
 nearly identical viewpoints, heavy furniture occlusion, learned-depth bias,
-invisible ceilings, and missing corners. Real-photo metric accuracy has not been
-benchmarked. Multi-room stitching, adjacency, door/window detection, damage,
-repair scope, UI, mobile capture, and cloud processing are outside this phase.
+invisible ceilings, missing corners, or absent cross-room doorway views. Real-photo
+metric accuracy and automatic stitching reliability have not been benchmarked.
+Multi-storey layouts, semantic door/window detection, damage, repair scope, UI,
+mobile capture, and cloud processing are outside this phase.

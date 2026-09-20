@@ -33,6 +33,9 @@ from property_scanner.reconstruction.video.orientation import canonicalize
 from property_scanner.reconstruction.video.pipeline import metric_keyframe
 from property_scanner.reconstruction.video.scale import estimate_scale
 from property_scanner.reconstruction.video.sfm import ColmapReconstructor, SfMReconstructor
+from property_scanner.stitching.diagnostics import export_stitching_diagnostics, room_scale_quality
+from property_scanner.stitching.engine import MultiRoomStitcher
+from property_scanner.stitching.evidence import collect_cached_photo_evidence
 
 logger = logging.getLogger(__name__)
 VERSION = "photo-metric-1.0.0"
@@ -274,5 +277,37 @@ def process_photo(
             metadata=summary),
         metadata={"room_coordinates_are_local": True, "multi_room_stitching_implemented": False},
     )
+    if config.enable_property_stitching and len(successful) > 1:
+        logger.info("Evaluating cross-room stitching evidence")
+        candidates = collect_cached_photo_evidence(output, [room.room_id for room in successful], config.stitching)
+        stitched = MultiRoomStitcher(config.stitching).stitch(result.property.property_id, successful, candidates)
+        export_stitching_diagnostics(output / "stitching", successful, candidates, stitched)
+        scale_report, inconsistent_scales = room_scale_quality(
+            output, [room.room_id for room in successful], config.stitching)
+        write_json(output / "stitching/room_scale_consistency.json", scale_report)
+        if inconsistent_scales:
+            stitched.warnings.append(ResultWarning(code="ROOM_SCALE_INCONSISTENCY",
+                message=f"Weak independent metric-scale consistency for: {', '.join(inconsistent_scales)}."))
+        result.warnings.extend(stitched.warnings)
+        result.processing_info.modules_used.append("multi_room_stitching")
+        result.processing_info.metadata["stitching"] = stitched.diagnostics.model_dump(mode="json")
+        result.metadata["multi_room_stitching_implemented"] = True
+        if not any(item.relative_transform is not None for item in candidates):
+            result.warnings.append(ResultWarning(code="NO_CROSS_ROOM_MATCHES",
+                message="No geometrically verified metric cross-room correspondence was found."))
+        if stitched.diagnostics.valid_layout:
+            result.property = stitched.property
+            result.metadata["room_coordinates_are_local"] = False
+            drawing = FloorPlanRenderer().render_property(result.property, title="Property floor plan")
+            try:
+                drawing.save(output)
+                result.warnings.extend(drawing.warnings)
+            finally:
+                drawing.close()
+            summary.update({"coordinate_scope": "property_shared", "stitching_performed": True,
+                            "stitching_valid": True})
+        else:
+            summary.update({"stitching_performed": True, "stitching_valid": False})
+        write_json(output / "photo_summary.json", summary)
     save_result(result, output / "result.json")
     return result

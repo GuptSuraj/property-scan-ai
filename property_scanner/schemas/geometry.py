@@ -148,6 +148,10 @@ class PropertyGeometry(ContractModel):
     openings: list[Opening] = Field(default_factory=list)
     room_connections: list[RoomConnection] = Field(default_factory=list)
     footprint_polygon: Polygon2D | None = None
+    footprint_components: list[Polygon2D] = Field(
+        default_factory=list,
+        description="All union components; footprint_polygon is set only when the union is one polygon.",
+    )
     total_floor_area: AreaMeasurement | None = None
     bounding_dimensions: BoundingDimensions | None = None
     confidence: ConfidenceScore | None = None

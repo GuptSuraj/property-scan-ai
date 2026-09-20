@@ -1223,6 +1223,14 @@
           "default": null,
           "title": "Confidence"
         },
+        "footprint_components": {
+          "description": "All union components; footprint_polygon is set only when the union is one polygon.",
+          "items": {
+            "$ref": "#/$defs/Polygon2D"
+          },
+          "title": "Footprint Components",
+          "type": "array"
+        },
         "footprint_polygon": {
           "anyOf": [
             {

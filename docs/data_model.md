@@ -211,8 +211,10 @@ stages to pass an actual result to downstream consumers without inventing one.
 Independent-room photo, canonical LiDAR RGB-D, and metric video reconstruction
 populate this contract with genuinely available
 geometry, provenance, and processing warnings; see [lidar_pipeline.md](lidar_pipeline.md)
-and [video_pipeline.md](video_pipeline.md). Photo room coordinates are explicitly
-local and unstitched; no connections or property footprint are inferred.
+and [video_pipeline.md](video_pipeline.md). Photo room artifacts remain explicitly
+local; when cross-room metric evidence supports a valid layout, the root property
+contains rigidly positioned rooms, inferred connections, and a union footprint.
+Failed layouts retain local rooms and structured warnings.
 Geometry has a standalone point-cloud entry point;
 the renderer consumes supplied geometry and can export a real context result.
 See [floorplan_renderer.md](floorplan_renderer.md). The CLI processes canonical

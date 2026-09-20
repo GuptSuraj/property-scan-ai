@@ -8,6 +8,7 @@ from property_scanner.pipeline.context import ScanContext
 from property_scanner.geometry.models import RoomGeometryResult
 from property_scanner.schemas.geometry import Room, Opening, PropertyGeometry
 from property_scanner.schemas.result import ResultWarning
+from property_scanner.schemas.damage import DamageRegion
 from property_scanner.rendering.styles import RenderingConfig
 from property_scanner.rendering.exceptions import FloorPlanRenderError, InvalidGeometryError
 
@@ -74,7 +75,8 @@ class FloorPlanRenderer:
             raise InvalidGeometryError(f"Invalid room geometry: {exc}") from exc
 
     def render_property(self, geometry: PropertyGeometry, *, title: str | None = None,
-                        north_angle_degrees: float | None = None) -> RenderedFloorPlan:
+                        north_angle_degrees: float | None = None,
+                        damages: Sequence[DamageRegion] = ()) -> RenderedFloorPlan:
         try:
             from matplotlib import rc_context
             from shapely.errors import ShapelyError
@@ -84,7 +86,7 @@ class FloorPlanRenderer:
         try:
             validated = PropertyGeometry.model_validate(geometry.model_dump())
             with rc_context({"font.family": ["DejaVu Sans", "Arial", "sans-serif"], "text.usetex": False}):
-                figure, warnings = draw_plan(validated, self.config, title, north_angle_degrees)
+                figure, warnings = draw_plan(validated, self.config, title, north_angle_degrees, damages)
             return RenderedFloorPlan(figure, self.config, warnings)
         except (ValidationError, ShapelyError, ValueError, RuntimeError) as exc:
             raise InvalidGeometryError(f"Cannot render supplied property geometry: {exc}") from exc

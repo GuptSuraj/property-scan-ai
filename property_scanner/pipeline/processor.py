@@ -50,7 +50,8 @@ class PropertyScanPipeline:
         return PreparationResult(capture=capture, output_dir=output_dir)
 
     def process(self, prepared: PreparationResult, *, lidar_config: LidarConfig | None = None,
-                video_config: VideoConfig | None = None, photo_config: PhotoConfig | None = None) -> PropertyScanResult:
+                video_config: VideoConfig | None = None, photo_config: PhotoConfig | None = None,
+                skip_damage: bool = False) -> PropertyScanResult:
         """Dispatch implemented reconstruction modes into shared downstream stages."""
         if prepared.capture.tier == "lidar" and ((prepared.capture.source_path / "manifest.json").is_file() or lidar_config is not None):
             try:
@@ -58,21 +59,27 @@ class PropertyScanPipeline:
             except ImportError as exc:
                 from property_scanner.core.exceptions import ConfigurationError
                 raise ConfigurationError("Install LiDAR dependencies: pip install -e '.[lidar]'") from exc
-            return process_lidar(prepared, lidar_config or LidarConfig(), model_dir=self.settings.model_dir)
+            result = process_lidar(prepared, lidar_config or LidarConfig(), model_dir=self.settings.model_dir)
+            from property_scanner.pipeline.finalize import finalize_result
+            return finalize_result(prepared.output_dir, result, self.settings.model_dir, skip_damage=skip_damage)
         if prepared.capture.tier == "video" and video_config is not None:
             try:
                 from property_scanner.reconstruction.video.pipeline import process_video
             except ImportError as exc:
                 from property_scanner.core.exceptions import ConfigurationError
                 raise ConfigurationError("Install video dependencies: pip install -e '.[video]'") from exc
-            return process_video(prepared, video_config, self.settings.model_dir)
+            result = process_video(prepared, video_config, self.settings.model_dir)
+            from property_scanner.pipeline.finalize import finalize_result
+            return finalize_result(prepared.output_dir, result, self.settings.model_dir, skip_damage=skip_damage)
         if prepared.capture.tier == "photo" and photo_config is not None:
             try:
                 from property_scanner.reconstruction.photo.pipeline import process_photo
             except ImportError as exc:
                 from property_scanner.core.exceptions import ConfigurationError
                 raise ConfigurationError("Install photo dependencies: pip install -e '.[photo]'") from exc
-            return process_photo(prepared, photo_config, self.settings.model_dir)
+            result = process_photo(prepared, photo_config, self.settings.model_dir)
+            from property_scanner.pipeline.finalize import finalize_result
+            return finalize_result(prepared.output_dir, result, self.settings.model_dir, skip_damage=skip_damage)
         context = ScanContext(capture=prepared.capture, output_dir=prepared.output_dir)
         for stage in self.stages:
             context = stage.run(context)

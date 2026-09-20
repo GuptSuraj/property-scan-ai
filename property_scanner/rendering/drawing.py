@@ -6,6 +6,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.lines import Line2D
 from property_scanner.schemas.geometry import PropertyGeometry, OpeningType
 from property_scanner.schemas.result import ResultWarning
+from property_scanner.schemas.damage import DamageRegion
 from property_scanner.rendering.styles import RenderingConfig
 from property_scanner.rendering.scene import build_scene
 from property_scanner.rendering.openings import locate_openings, wall_intervals, draw_opening
@@ -14,7 +15,7 @@ from property_scanner.rendering.exceptions import InvalidGeometryError
 
 
 def draw_plan(geometry: PropertyGeometry, config: RenderingConfig, title: str | None,
-              north_angle_degrees: float | None) -> tuple[Figure, list[ResultWarning]]:
+              north_angle_degrees: float | None, damages: tuple[DamageRegion, ...] | list[DamageRegion] = ()) -> tuple[Figure, list[ResultWarning]]:
     scene = build_scene(geometry, config)
     openings, warnings = locate_openings(geometry, scene, config)
     margin = config.dimension_offset*(config.dimension_lanes+2)+config.layout_padding
@@ -68,6 +69,22 @@ def draw_plan(geometry: PropertyGeometry, config: RenderingConfig, title: str | 
         occupied.append(text)
     for opening in openings:
         draw_opening(ax, opening, config)
+    if config.show_damage_markers:
+        walls = {wall.wall_id: (a, b) for positioned in scene.rooms for wall, a, b in positioned.walls}
+        for damage in damages:
+            if damage.bounding_box is None: continue
+            x = (damage.bounding_box.min_point.x+damage.bounding_box.max_point.x)/2-scene.origin[0]
+            y = (damage.bounding_box.min_point.y+damage.bounding_box.max_point.y)/2-scene.origin[1]
+            if damage.surface_id in walls:
+                a, b = walls[damage.surface_id]; direction = (b-a)/np.linalg.norm(b-a)
+                u = (damage.bounding_box.min_point.x+damage.bounding_box.max_point.x)/2
+                x, y = a+direction*u
+            ax.scatter([x], [y], marker="$!$", s=55, color=config.damage_color, zorder=9)
+            label = damage.damage_type.value.replace("_", " ").title()
+            extent = damage.metric_area or damage.metric_length
+            if extent: label += f"\n{extent.value:.{config.display_precision}f} {extent.unit.value}"
+            ax.annotate(label, (x, y), xytext=(6, 6), textcoords="offset points",
+                fontsize=config.font_size, color=config.damage_color, zorder=9)
     if title:
         ax.text(scene.width/2, scene.height+margin-config.layout_padding/2, title,
                 ha="center", va="top", fontsize=config.title_font_size, color=config.text_color, parse_math=False)
@@ -120,6 +137,8 @@ def draw_plan(geometry: PropertyGeometry, config: RenderingConfig, title: str | 
                       OpeningType.OPEN_PASSAGE: ("--", None, "Open passage"), OpeningType.UNKNOWN: (":", None, "Unknown opening (?)")}
             line, marker, label = styles[kind]
             handles.append(Line2D([], [], color=config.opening_color, linestyle=line, marker=marker, label=label))
+        if damages:
+            handles.append(Line2D([], [], color=config.damage_color, marker="$!$", linestyle="None", label="Visible damage"))
         ax.legend(handles=handles, loc="lower right", bbox_to_anchor=(0.98, 0.012), frameon=False,
                   fontsize=config.font_size, labelcolor=config.text_color)
     return figure, warnings

@@ -17,6 +17,14 @@ class MeasurementUnit(StrEnum):
     ITEM = "item"
 
 
+class ConfidenceMethod(StrEnum):
+    BENCHMARK_CALIBRATED = "benchmark_calibrated"
+    MULTI_VIEW_DISPERSION = "multi_view_dispersion"
+    GEOMETRY_RESIDUAL = "geometry_residual"
+    TIER_PRIOR_UNCALIBRATED = "tier_prior_uncalibrated"
+    UNAVAILABLE = "unavailable"
+
+
 class MeasuredValue(ContractModel):
     """Known nonnegative value; absence of the whole model means unknown.
 
@@ -31,6 +39,8 @@ class MeasuredValue(ContractModel):
     confidence_level: ConfidenceScore | None = Field(default=None, description="Coverage probability of an interval, if known.")
     confidence_score: ConfidenceScore | None = Field(default=None, description="Evidence quality score; not interval coverage.")
     method: NonEmptyText | None = Field(default=None, description="Provenance or calibration method; no default method is assumed.")
+    confidence_method: ConfidenceMethod = Field(default=ConfidenceMethod.UNAVAILABLE,
+        description="Explicit uncertainty source; uncalibrated evidence is never labelled benchmark-calibrated.")
 
     @model_validator(mode="after")
     def validate_bounds(self) -> Self:

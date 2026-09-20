@@ -4,7 +4,7 @@ The LiDAR path reconstructs one already segmented room from registered RGB-D
 frames, calibrated intrinsics, and device poses. It runs locally on CPU and uses
 the existing geometry engine, renderer, and `PropertyScanResult` contract.
 There is no iPhone app integration, cloud API, photo reconstruction,
-stitching, TSDF, semantic/damage detection, or ground-truth benchmarking.
+TSDF or ground-truth benchmarking. Shared opening and optional damage analysis run downstream from cached calibrated frames.
 
 ```text
 LidarCaptureAdapter → Canonical RGB-D frames + intrinsics + normalized poses
@@ -38,7 +38,7 @@ accuracy. Lower ICP residuals do not guarantee more accurate floor areas.
 
 `--lidar-config config.json` accepts a `LidarConfig` JSON object. An explicit
 `--drift-correction` overrides its value. Canonical manifests default to ON.
-Photo remains preparation-only. Video has its own reconstruction backend. To preserve the original startup behavior,
+Photo and Video have their own reconstruction backends. To preserve the original startup behavior,
 noncanonical LiDAR folders without `manifest.json` and without LiDAR-specific
 CLI flags remain **preparation-only** with `prepared_not_processed` status.
 Explicit LiDAR processing flags require a valid manifest and fail if it is missing.
@@ -244,11 +244,11 @@ geometry remains represented; unavailable area/height stays null. No plan is
 fabricated. A completed run with downstream errors prints
 `completed_with_processing_errors` and exits 0 so retained outputs can be used;
 fatal capture/reconstruction errors exit 2. Consumers must inspect status/errors,
-not only the presence of result.json. Photo remains unimplemented.
+not only the presence of result.json.
 
 `PropertyScanResult` contains actual LiDAR capture provenance, one room's known
 geometry, processing timestamps/duration, warnings, and module/library versions.
-Unimplemented damage, opening detection, and scope collections remain empty.
+When model weights are unavailable, opening/damage collections remain empty with structured warnings; no detections are invented.
 No capture timestamp is invented if the manifest omits it. Saved references avoid
 machine-specific source paths. Effective config/calibration/manifest and normalized
 selected poses make runs reproducible; timing and run UUID naturally differ.

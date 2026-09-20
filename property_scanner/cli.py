@@ -6,11 +6,18 @@ from pydantic import ValidationError
 from collections.abc import Sequence
 
 from config.settings import load_settings
-from property_scanner.core.exceptions import PropertyScannerError
+from property_scanner.core.exceptions import PropertyScannerError, ProcessingError
 from property_scanner.core.logging import configure_logging
 from property_scanner.inputs import select_adapter
 from property_scanner.pipeline.processor import PropertyScanPipeline
 from property_scanner.schemas.common import InputTier
+
+
+def _print_completed_stages(skip_damage: bool) -> None:
+    damage = "Damage stage skipped" if skip_damage else "Damage stage complete"
+    for index, message in enumerate(("Geometry extraction complete", "Room stitching complete", "Opening stage complete",
+        damage, "Confidence calculation complete", "Output rendering complete"), start=3):
+        print(f"[{index}/8] {message}")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -26,6 +33,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Input path, relative to the current working directory or absolute.",
     )
     parser.add_argument("--prepare-only", action="store_true", help="Validate input paths and allocate output without reconstruction")
+    parser.add_argument("--output", type=Path, help="Output root override")
+    parser.add_argument("--skip-damage", action="store_true", help="Skip optional local damage-model inference")
+    parser.add_argument("--diagnostics", action="store_true", help="Retain standard diagnostic artifacts")
+    parser.add_argument("--verbose", action="store_true", help="Enable debug logging")
     parser.add_argument("--video-config", type=Path, help="Optional VideoConfig JSON")
     parser.add_argument("--photo-config", type=Path, help="Optional PhotoConfig JSON")
     parser.add_argument("--max-keyframes", type=int, help="Video keyframe budget override")
@@ -42,19 +53,25 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("LiDAR options require --tier lidar")
     try:
         settings = load_settings()
-        configure_logging(settings.log_level)
+        if args.output is not None:
+            settings = settings.model_copy(update={"output_dir": args.output.expanduser().resolve()})
+        configure_logging("DEBUG" if args.verbose else settings.log_level)
+        print("[1/8] Validating capture")
         adapter = select_adapter(args.tier, args.input)
         pipeline = PropertyScanPipeline(settings)
         result = pipeline.prepare(adapter)
+        if not args.prepare_only:
+            print("[2/8] Reconstructing scene")
         canonical = args.tier == "lidar" and ((result.capture.source_path / "manifest.json").is_file() or args.drift_correction is not None or args.lidar_config is not None)
         if args.tier == "photo" and not args.prepare_only:
             from property_scanner.reconstruction.photo.models import PhotoConfig
             config = PhotoConfig.model_validate_json(args.photo_config.read_text()) if args.photo_config else PhotoConfig()
-            scan = pipeline.process(result, photo_config=config)
+            scan = pipeline.process(result, photo_config=config, skip_damage=args.skip_damage)
+            _print_completed_stages(args.skip_damage)
             print(f"Capture: {scan.capture.capture_id}\nOutput: {result.output_dir}\nJSON: {result.output_dir / 'result.json'}")
             print(f"Rooms: {len(scan.property.rooms)} successful, {len(scan.processing_info.errors)} failed")
             print("Status: completed_with_processing_errors" if scan.processing_info.errors else "Status: processed")
-            return 0 if scan.property.rooms else 2
+            return 0 if scan.property.rooms else 1
         if args.tier == "video" and not args.prepare_only:
             from property_scanner.reconstruction.video.models import VideoConfig
             config = VideoConfig.model_validate_json(args.video_config.read_text()) if args.video_config else VideoConfig()
@@ -67,20 +84,25 @@ def main(argv: Sequence[str] | None = None) -> int:
                 updates["enable_icp_refinement"] = False
             if updates:
                 config = VideoConfig.model_validate({**config.model_dump(), **updates})
-            scan = pipeline.process(result, video_config=config)
+            scan = pipeline.process(result, video_config=config, skip_damage=args.skip_damage)
+            _print_completed_stages(args.skip_damage)
             print(f"Capture: {scan.capture.capture_id}\nOutput: {result.output_dir}\nJSON: {result.output_dir / 'result.json'}")
             print("Status: completed_with_processing_errors" if scan.processing_info.errors else "Status: processed")
-            return 2 if scan.processing_info.errors else 0
+            return 1 if scan.processing_info.errors else 0
         if canonical and not args.prepare_only:
             from property_scanner.reconstruction.lidar.models import LidarConfig
             config = LidarConfig.model_validate_json(args.lidar_config.read_text()) if args.lidar_config else LidarConfig()
             if args.drift_correction is not None:
                 config = LidarConfig.model_validate({**config.model_dump(), "drift_correction": args.drift_correction})
-            scan = pipeline.process(result, lidar_config=config)
+            scan = pipeline.process(result, lidar_config=config, skip_damage=args.skip_damage)
+            _print_completed_stages(args.skip_damage)
             print(f"Capture: {scan.capture.capture_id}\nOutput: {result.output_dir}")
             print("Status: completed_with_processing_errors" if scan.processing_info.errors else "Status: processed")
             print(f"JSON: {result.output_dir / 'result.json'}")
-            return 0
+            return 1 if scan.processing_info and scan.processing_info.errors else 0
+    except ProcessingError as exc:
+        print(f"Processing failed: {exc}", file=__import__("sys").stderr)
+        return 1
     except (PropertyScannerError, ValidationError, OSError) as exc:
         parser.exit(2, f"Error: {exc}\n")
     print(f"Capture: {result.capture.capture_id}")

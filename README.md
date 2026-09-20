@@ -5,10 +5,7 @@ walkthrough video, and exported LiDAR data. The long-term goal is a stitched 2D
 floor plan, room dimensions, wall lengths, floor area, ceiling height, openings,
 visible damage, repair/scope items, confidence intervals, and structured JSON.
 
-**Current status: metric photo reconstruction with evidence-based single-floor room stitching, local metric video reconstruction, canonical LiDAR/RGB-D
-reconstruction with optional drift correction, unified JSON, point-cloud geometry,
-dimensioned PNG/SVG plans, and conservative metric door/window/opening detection.** Damage AI remains
-unimplemented. Photo rooms, video, and canonical LiDAR captures process when
+**Current status: integrated local Photo, Video, and canonical LiDAR/RGB-D processing; shared geometry, single-floor room stitching, metric openings, optional visible-damage analysis, explicit uncertainty methods, unified JSON/CSV, and dimensioned PNG/SVG plans.** Photo rooms, video, and canonical LiDAR captures process when
 their external dependencies and required inputs are available. A development command can
 measure an already reconstructed metric single-room `.ply`/`.pcd` cloud.
 Validated result objects can be saved/loaded as JSON and the schema exported.
@@ -45,11 +42,10 @@ python -m pip install -r requirements.txt
 cp .env.example .env
 ```
 
-`requirements.txt` installs this project in editable mode with pytest and
-jsonschema (used only to test the generated contract).
-For runtime dependencies only, use `python -m pip install -e .`.
-Dependencies are declared once in `pyproject.toml`: Pydantic, pydantic-settings,
-and python-dotenv. The CLI uses standard-library argparse.
+`requirements.txt` installs the complete application extras and test tools.
+For a smaller install, choose extras such as `.[photo]`, `.[video]`, `.[lidar]`,
+`.[openings]`, `.[damage]`, or `.[ui]`. Photo and Video also need the local
+system tools installed with `brew install ffmpeg colmap`.
 
 ## Run
 
@@ -63,11 +59,27 @@ python run.py --tier video --input ./inputs/example.mp4
 python run.py --tier lidar --input ./inputs/lidar_capture
 ```
 
+Useful shared flags are `--output`, `--skip-damage`, `--diagnostics`, and
+`--verbose`; LiDAR also accepts `--drift-correction on|off`. Metric runs write
+`result.json`, `floorplan.png`, `floorplan.svg`, `measurements.csv`,
+`processing_config.json`, diagnostics, and tier artifacts under
+`outputs/<capture_id>/`.
+
+Run the minimal local UI with:
+
+```bash
+streamlit run app.py
+```
+
+Photo and LiDAR uploads use ZIP files, while Video accepts MP4/MOV. ZIP
+extraction rejects path traversal. The same page shows rooms, warnings, plans,
+measurements, damage/scope data, and output downloads.
+
 The installed `property-scan` command takes the same arguments.
 
 | Mode | Current validation | Future acquisition work |
 | --- | --- | --- |
-| Photo | Property directory with room folders; each room supplies 2–8 selected JPG/JPEG/PNG/HEIC images; verified transition views support stitching | Semantic doors/windows and multi-storey layout |
+| Photo | Property directory with room folders; each room supplies 2–8 selected JPG/JPEG/PNG/HEIC images; verified transition views support stitching | Multi-storey layout and benchmark calibration |
 | Video | Decodable MP4 or MOV; FFprobe metadata, bounded extraction, deterministic keyframes | App-specific intrinsic/IMU metadata adapters |
 | LiDAR | Canonical manifest: calibrated registered RGB-D, explicit depth units and rigid poses; legacy preparation accepts a nonempty directory | App-specific export adapters and registration/remapping |
 
@@ -108,14 +120,21 @@ directories. Inputs, outputs, model files, and `.env` are git-ignored.
 
 ```bash
 pytest
-python scripts/download_models.py
+python scripts/download_models.py --photo --video --openings --damage
 ```
 
 Tests cover imports, adapters, validation, settings, JSON contracts, synthetic
 geometry/LiDAR/video reconstruction, robust video scale recovery, and rendering.
 Synthetic fixtures test algorithms and do not establish real-world accuracy. The
 model download script makes an explicit network request only with `--video`,
-`--photo`, or `--openings`.
+`--photo`, `--openings`, or `--damage`.
+
+Pretrained local models are Depth Anything V2 Small Metric Indoor for Photo and
+Video depth, SegFormer-B0 ADE20K for door/window semantics, and prompt-free
+YOLOE-11s segmentation for visible-damage candidates. Model weights stay under the ignored
+`models/` directory. Processing uses Apple MPS when supported and CPU otherwise.
+No cloud service or API key is required. These general pretrained models have
+not been calibrated as property-condition benchmarks.
 
 ## Limitations and planned phases
 
@@ -128,13 +147,11 @@ model download script makes an explicit network request only with `--video`,
    ICP/pose graphs, CPU COLMAP SfM, metric depth, and robust photo/video scale recovery work.
 4. **Geometry (partially implemented):** metric point-cloud geometry and rigid,
    evidence-based single-floor photo room stitching and shared metric opening detection work.
-5. **Analysis:** visible damage, repair/scope items, measurements, and validated
-   confidence intervals.
-6. **Outputs (partially implemented):** JSON serialization and dimensioned PNG/SVG
-   rendering work for supplied geometry, video, and canonical LiDAR. Benchmarking,
-   and a UI remain future work.
+5. **Analysis:** optional local visible-damage detection, deterministic repair scope,
+   and explicitly sourced uncertainty intervals are integrated. Accuracy calibration awaits benchmark data.
+6. **Outputs:** JSON, measurement CSV, dimensioned PNG/SVG, diagnostics, CLI, and a minimal Streamlit UI are implemented.
 
-Multi-storey stitching, Streamlit, benchmarking, database, authentication, mobile
+Multi-storey stitching, benchmarking, database, authentication, mobile
 capture, and Docker are not included. Model weights are not committed or downloaded
 implicitly. Video users explicitly download one pinned indoor metric-depth model.
 

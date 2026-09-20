@@ -10,9 +10,10 @@ def main() -> int:
     parser.add_argument('--video',action='store_true',help='Download pinned Depth Anything V2 Small metric indoor weights')
     parser.add_argument('--photo',action='store_true',help='Download the same shared metric-depth weights for photo mode')
     parser.add_argument('--openings',action='store_true',help='Download pinned SegFormer-B0 ADE20K opening segmentation weights')
+    parser.add_argument('--damage',action='store_true',help='Download the YOLOE-11s segmentation checkpoint for damage prompts')
     args=parser.parse_args()
-    if not (args.video or args.photo or args.openings):
-        print('No download requested. Use --photo, --video, or --openings.')
+    if not (args.video or args.photo or args.openings or args.damage):
+        print('No download requested. Use --photo, --video, --openings, or --damage.')
         return 0
     from huggingface_hub import snapshot_download
     from config.settings import load_settings
@@ -33,6 +34,20 @@ def main() -> int:
         (target/'provenance.json').write_text(__import__('json').dumps(
             {'model':SEMANTIC_MODEL,'revision':SEMANTIC_REVISION},indent=2))
         print(f'Opening segmentation model cached: {target}')
+    if args.damage:
+        try:
+            from ultralytics.utils.downloads import attempt_download_asset
+            from property_scanner.damage.models import DAMAGE_MODEL_FILE
+            import shutil
+            source = Path(attempt_download_asset(DAMAGE_MODEL_FILE))
+            target = settings.model_dir/DAMAGE_MODEL_FILE
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if source.resolve() != target.resolve(): shutil.copy2(source, target)
+            print(f'Damage segmentation model cached: {target}')
+            print('Prompt-free YOLOE avoids a separate text-encoder download at processing time.')
+        except ImportError as exc:
+            print("Damage download requires the damage extra: pip install -e '.[damage]'", file=sys.stderr)
+            return 2
     return 0
 
 

@@ -19,6 +19,11 @@
           "description": "Coverage probability of an interval, if known.",
           "title": "Confidence Level"
         },
+        "confidence_method": {
+          "$ref": "#/$defs/ConfidenceMethod",
+          "default": "unavailable",
+          "description": "Explicit uncertainty source; uncalibrated evidence is never labelled benchmark-calibrated."
+        },
         "confidence_score": {
           "anyOf": [
             {
@@ -113,6 +118,11 @@
           "default": null,
           "description": "Coverage probability of an interval, if known.",
           "title": "Confidence Level"
+        },
+        "confidence_method": {
+          "$ref": "#/$defs/ConfidenceMethod",
+          "default": "unavailable",
+          "description": "Explicit uncertainty source; uncalibrated evidence is never labelled benchmark-calibrated."
         },
         "confidence_score": {
           "anyOf": [
@@ -538,6 +548,17 @@
       "title": "ConcealedDamageFlag",
       "type": "object"
     },
+    "ConfidenceMethod": {
+      "enum": [
+        "benchmark_calibrated",
+        "multi_view_dispersion",
+        "geometry_residual",
+        "tier_prior_uncalibrated",
+        "unavailable"
+      ],
+      "title": "ConfidenceMethod",
+      "type": "string"
+    },
     "ConnectionType": {
       "enum": [
         "door",
@@ -830,6 +851,11 @@
           "default": null,
           "description": "Coverage probability of an interval, if known.",
           "title": "Confidence Level"
+        },
+        "confidence_method": {
+          "$ref": "#/$defs/ConfidenceMethod",
+          "default": "unavailable",
+          "description": "Explicit uncertainty source; uncalibrated evidence is never labelled benchmark-calibrated."
         },
         "confidence_score": {
           "anyOf": [
@@ -1311,6 +1337,11 @@
           "default": null,
           "description": "Coverage probability of an interval, if known.",
           "title": "Confidence Level"
+        },
+        "confidence_method": {
+          "$ref": "#/$defs/ConfidenceMethod",
+          "default": "unavailable",
+          "description": "Explicit uncertainty source; uncalibrated evidence is never labelled benchmark-calibrated."
         },
         "confidence_score": {
           "anyOf": [

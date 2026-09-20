@@ -1,2 +1,2 @@
 # pyproject.toml is the single source of dependency declarations.
--e .[dev]
+-e .[dev,photo,video,lidar,openings,damage,ui]

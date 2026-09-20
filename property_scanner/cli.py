@@ -1,6 +1,7 @@
 """Local photo/video and canonical LiDAR reconstruction with friendly errors."""
 
 import argparse
+from hashlib import sha256
 from pathlib import Path
 from pydantic import ValidationError
 from collections.abc import Sequence
@@ -13,17 +14,38 @@ from property_scanner.pipeline.processor import PropertyScanPipeline
 from property_scanner.schemas.common import InputTier
 
 
+def _prepare_lidar_source(source: Path, output_root: Path) -> Path:
+    """Convert supported application exports before the generic input adapter."""
+    source = source.expanduser().resolve()
+    if source.suffix.lower() == ".r3d":
+        from property_scanner.reconstruction.lidar.record3d import convert_record3d
+
+        digest = sha256(source.read_bytes()).hexdigest()[:12]
+        destination = output_root.expanduser().resolve() / "_record3d_imports" / f"{source.stem}-{digest}"
+        print("[INFO] Converting Record3D export to canonical RGB-D", flush=True)
+        return convert_record3d(source, destination)
+
+    from property_scanner.reconstruction.lidar.stray import is_stray_scanner_dir, convert_stray_scanner
+    if is_stray_scanner_dir(source):
+        digest = sha256(str(source).encode("utf-8")).hexdigest()[:12]
+        destination = output_root.expanduser().resolve() / "_stray_imports" / f"{source.name}-{digest}"
+        print("[INFO] Converting Stray Scanner export to canonical RGB-D", flush=True)
+        return convert_stray_scanner(source, destination)
+
+    return source
+
+
 def _print_completed_stages(skip_damage: bool) -> None:
     damage = "Damage stage skipped" if skip_damage else "Damage stage complete"
     for index, message in enumerate(("Geometry extraction complete", "Room stitching complete", "Opening stage complete",
         damage, "Confidence calculation complete", "Output rendering complete"), start=3):
-        print(f"[{index}/8] {message}")
+        print(f"[{index}/8] {message}", flush=True)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Return 0 for successful preparation, 2 for expected user errors."""
     parser = argparse.ArgumentParser(
-        description="Reconstruct photo properties, videos, and canonical LiDAR RGB-D captures."
+        description="Reconstruct photo properties, videos, canonical RGB-D captures, and Record3D .r3d exports."
     )
     parser.add_argument("--tier", required=True, choices=[tier.value for tier in InputTier])
     parser.add_argument("--drift-correction", choices=["on", "off"], default=None, help="LiDAR correction mode; canonical captures default to on")
@@ -56,12 +78,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.output is not None:
             settings = settings.model_copy(update={"output_dir": args.output.expanduser().resolve()})
         configure_logging("DEBUG" if args.verbose else settings.log_level)
-        print("[1/8] Validating capture")
-        adapter = select_adapter(args.tier, args.input)
+        print("[1/8] Validating capture", flush=True)
+        source = _prepare_lidar_source(args.input, settings.output_dir) if args.tier == "lidar" else args.input
+        adapter = select_adapter(args.tier, source)
         pipeline = PropertyScanPipeline(settings)
         result = pipeline.prepare(adapter)
         if not args.prepare_only:
-            print("[2/8] Reconstructing scene")
+            print("[2/8] Reconstructing scene", flush=True)
         canonical = args.tier == "lidar" and ((result.capture.source_path / "manifest.json").is_file() or args.drift_correction is not None or args.lidar_config is not None)
         if args.tier == "photo" and not args.prepare_only:
             from property_scanner.reconstruction.photo.models import PhotoConfig

@@ -5,7 +5,7 @@ walkthrough video, and exported LiDAR data. The long-term goal is a stitched 2D
 floor plan, room dimensions, wall lengths, floor area, ceiling height, openings,
 visible damage, repair/scope items, confidence intervals, and structured JSON.
 
-**Current status: integrated local Photo, Video, and canonical LiDAR/RGB-D processing; shared geometry, single-floor room stitching, metric openings, optional visible-damage analysis, explicit uncertainty methods, unified JSON/CSV, and dimensioned PNG/SVG plans.** Photo rooms, video, and canonical LiDAR captures process when
+**Current status: integrated local Photo, Video, canonical LiDAR/RGB-D, and Record3D `.r3d` processing; shared geometry, single-floor room stitching, metric openings, optional visible-damage analysis, explicit uncertainty methods, unified JSON/CSV, and dimensioned PNG/SVG plans.** Photo rooms, video, and LiDAR captures process when
 their external dependencies and required inputs are available. A development command can
 measure an already reconstructed metric single-room `.ply`/`.pcd` cloud.
 Validated result objects can be saved/loaded as JSON and the schema exported.
@@ -57,6 +57,7 @@ python run.py --help
 python run.py --tier photo --input ./inputs/example
 python run.py --tier video --input ./inputs/example.mp4
 python run.py --tier lidar --input ./inputs/lidar_capture
+python run.py --tier lidar --input ./inputs/room_scan.r3d --drift-correction on
 ```
 
 Useful shared flags are `--output`, `--skip-damage`, `--diagnostics`, and
@@ -71,7 +72,8 @@ Run the minimal local UI with:
 streamlit run app.py
 ```
 
-Photo and LiDAR uploads use ZIP files, while Video accepts MP4/MOV. ZIP
+Photo uploads use ZIP, Video accepts MP4/MOV, and LiDAR accepts canonical ZIP or
+Record3D `.r3d`. ZIP
 extraction rejects path traversal. The same page shows rooms, warnings, plans,
 measurements, damage/scope data, and output downloads.
 
@@ -81,7 +83,7 @@ The installed `property-scan` command takes the same arguments.
 | --- | --- | --- |
 | Photo | Property directory with room folders; each room supplies 2–8 selected JPG/JPEG/PNG/HEIC images; verified transition views support stitching | Multi-storey layout and benchmark calibration |
 | Video | Decodable MP4 or MOV; FFprobe metadata, bounded extraction, deterministic keyframes | App-specific intrinsic/IMU metadata adapters |
-| LiDAR | Canonical manifest: calibrated registered RGB-D, explicit depth units and rigid poses; legacy preparation accepts a nonempty directory | App-specific export adapters and registration/remapping |
+| LiDAR | Record3D `.r3d`, or canonical calibrated RGB-D with explicit units and poses | Additional app adapters and unregistered-stream remapping |
 
 Photo processing decodes and validates each room independently. Video processing
 validates and decodes its container. Canonical LiDAR processing
@@ -141,8 +143,9 @@ not been calibrated as property-condition benchmarks.
 1. **Foundation (current):** package/configuration, adapters, shared stage
    interfaces, preparation CLI, logging, errors, startup tests, and a versioned
    unified result contract with JSON serialization and schema validation tests.
-2. **Acquisition (partially implemented):** canonical RGB-D, video keyframes, and
-   photo room discovery/EXIF normalization work. App-specific capture adapters remain future work.
+2. **Acquisition (partially implemented):** canonical RGB-D, direct Record3D
+   `.r3d`, video keyframes, and photo room discovery/EXIF normalization work.
+   Additional capture-application adapters remain future work.
 3. **Reconstruction (partially implemented):** local CPU RGB-D fusion, shared
    ICP/pose graphs, CPU COLMAP SfM, metric depth, and robust photo/video scale recovery work.
 4. **Geometry (partially implemented):** metric point-cloud geometry and rigid,
@@ -157,15 +160,17 @@ implicitly. Video users explicitly download one pinned indoor metric-depth model
 
 ## Canonical LiDAR / RGB-D pipeline
 
-Use the documented generic export format with registered RGB/depth, real pinhole
-intrinsics, explicit depth units, and declared device pose/coordinate conventions.
-No app-specific export layout is guessed. See [docs/lidar_pipeline.md](docs/lidar_pipeline.md).
+Use a Record3D `.r3d` export directly, or the documented generic format with
+registered RGB/depth, pinhole intrinsics, explicit depth units, and declared
+pose/coordinate conventions. Record3D conversion is isolated from the generic
+reconstruction path. See [docs/lidar_pipeline.md](docs/lidar_pipeline.md).
 
 ```bash
 python -m pip install -e '.[dev,lidar]'
 python scripts/generate_synthetic_lidar_capture.py
 python run.py --tier lidar --input ./inputs/synthetic_lidar --drift-correction on
 python run.py --tier lidar --input ./inputs/synthetic_lidar --drift-correction off
+python run.py --tier lidar --input ./inputs/room_scan.r3d --drift-correction on
 ```
 
 The generator creates synthetic algorithm-test data and refuses to overwrite an

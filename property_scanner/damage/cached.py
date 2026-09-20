@@ -13,7 +13,7 @@ def process_cached_damage(output: Path, result: PropertyScanResult, model_dir: P
                           config=None, vision_model: DamageVisionModel | None=None):
     config = config or DamageConfig(); output = Path(output)
     if not config.enabled or not result.property.rooms: return None
-    frames = [DamageFrame.model_validate(frame.model_dump()) for frame in load_cached_frames(output, result)]
+    frames = [DamageFrame.model_validate(frame.model_dump(exclude={"metadata"})) for frame in load_cached_frames(output, result)]
     if not frames:
         result.warnings.append(ResultWarning(code="DAMAGE_DEPTH_UNAVAILABLE", message="Damage analysis skipped because no calibrated RGB-depth keyframes are cached.")); return None
     if vision_model is None and not (Path(model_dir)/DAMAGE_MODEL_FILE).is_file():

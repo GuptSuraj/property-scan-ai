@@ -4,6 +4,7 @@ from pathlib import Path
 import subprocess
 import sys
 import shutil
+import zipfile
 import pytest
 o3d = pytest.importorskip("open3d", reason="Install .[lidar] for RGB-D tests")
 import numpy as np
@@ -19,6 +20,7 @@ from property_scanner.reconstruction.lidar.poses import rigid_transform, normali
 from property_scanner.reconstruction.lidar.fusion import Keyframe, frame_cloud, build_keyframes, fuse
 from property_scanner.reconstruction.lidar.registration import register_pair, loop_candidates, optimize
 from property_scanner.reconstruction.lidar.synthetic import generate_capture
+from property_scanner.reconstruction.lidar.record3d import convert_record3d
 from property_scanner.schemas.serialization import load_result
 
 
@@ -62,6 +64,33 @@ def test_manifest_and_calibration(capture):
     assert len(adapter.poses) == 25
     assert adapter.intrinsics.fx == 66
     assert adapter.manifest.registered_rgb_depth
+
+
+def test_record3d_archive_converts_to_canonical_capture(tmp_path):
+    liblzfse = pytest.importorskip("liblzfse")
+    archive = tmp_path / "room.r3d"
+    width, height = 32, 24
+    k = np.array([[30.0, 0.0, 15.5], [0.0, 30.0, 11.5], [0.0, 0.0, 1.0]])
+    metadata = {"w": width, "h": height, "dw": 16, "dh": 12,
+                "K": k.flatten(order="F").tolist(), "poses": [[0, 0, 0, 1, 0, 0, 0]],
+                "deviceName": "Synthetic iPhone"}
+    image_buffer = __import__("io").BytesIO()
+    Image.new("RGB", (width, height), (100, 120, 140)).save(image_buffer, format="JPEG")
+    depth = np.full((12, 16), 2.25, dtype=np.float32)
+    with zipfile.ZipFile(archive, "w") as handle:
+        handle.writestr("metadata", json.dumps(metadata))
+        handle.writestr("rgbd/0.jpg", image_buffer.getvalue())
+        handle.writestr("rgbd/0.depth", liblzfse.compress(depth.tobytes()))
+    root = convert_record3d(archive, tmp_path / "canonical")
+    adapter = CanonicalRGBDAdapter(root)
+    adapter.validate()
+    frames = list(adapter.load_frames(LidarConfig(min_valid_depth_pixels=10)))
+    assert adapter.manifest.source_app == "Record3D"
+    assert adapter.intrinsics.fx == 30
+    assert len(frames) == 1
+    assert frames[0].depth_m.shape == (height, width)
+    assert np.median(frames[0].depth_m) == pytest.approx(2.25, abs=.002)
+    assert np.linalg.det(frames[0].pose[:3, :3]) == pytest.approx(1)
 
 
 @pytest.mark.parametrize("field,value", [("depth_unit", "unknown"), ("depth_scale", 1), ("registered_rgb_depth", False),

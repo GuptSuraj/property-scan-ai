@@ -35,17 +35,32 @@ class ConfidenceEstimator:
 
     def apply(self, result: PropertyScanResult) -> PropertyScanResult:
         profile = self._profile(result.capture.tier.value); measures = []
+        if result.property.total_floor_area:
+            measures.append(("total_floor_area", result.property.total_floor_area, result.property.metadata))
+        if result.property.bounding_dimensions:
+            bounds = result.property.bounding_dimensions
+            for kind, value in (("property_length", bounds.length), ("property_width", bounds.width),
+                                ("property_height", bounds.height)):
+                if value: measures.append((kind, value, result.property.metadata))
         for room in result.property.rooms:
             for wall in room.walls:
-                if wall.length: measures.append(("wall_length", wall.length, wall.metadata))
+                for kind, value in (("wall_length", wall.length), ("wall_height", wall.height),
+                                    ("wall_thickness", wall.thickness), ("wall_orientation", wall.orientation)):
+                    if value: measures.append((kind, value, wall.metadata))
             if room.floor and room.floor.area: measures.append(("floor_area", room.floor.area, room.floor.metadata))
-            if room.ceiling and room.ceiling.height: measures.append(("ceiling_height", room.ceiling.height, room.ceiling.metadata))
+            if room.ceiling:
+                if room.ceiling.height: measures.append(("ceiling_height", room.ceiling.height, room.ceiling.metadata))
+                if room.ceiling.area: measures.append(("ceiling_area", room.ceiling.area, room.ceiling.metadata))
         for opening in result.property.openings:
-            for kind, value in (("opening_width", opening.width), ("opening_height", opening.height), ("sill_height", opening.sill_height)):
+            for kind, value in (("opening_width", opening.width), ("opening_height", opening.height),
+                                ("sill_height", opening.sill_height),
+                                ("opening_position", opening.position_along_wall)):
                 if value: measures.append((kind, value, opening.metadata))
         for damage in result.damages:
             if damage.metric_area: measures.append(("damage_area", damage.metric_area, damage.metadata))
             if damage.metric_length: measures.append(("damage_length", damage.metric_length, damage.metadata))
+        for item in result.scope_line_items:
+            if item.quantity: measures.append(("scope_quantity", item.quantity, item.metadata))
         for kind, value, metadata in measures:
             value.confidence_method = ConfidenceMethod.UNAVAILABLE
             if profile and kind in profile.absolute_error_by_type:

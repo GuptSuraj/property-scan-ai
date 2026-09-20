@@ -17,7 +17,7 @@ dependencies = [
 [project.optional-dependencies]
 photo = ["open3d>=0.18,<0.20", "numpy>=1.26,<3", "scipy>=1.11,<2", "shapely>=2,<3", "matplotlib>=3.8,<4", "pillow>=10,<13", "pillow-heif>=0.18,<2", "opencv-python>=4.9,<6", "torch>=2.4,<3", "transformers>=4.46,<5", "huggingface-hub>=0.26,<1"]
 video = ["open3d>=0.18,<0.20", "numpy>=1.26,<3", "scipy>=1.11,<2", "shapely>=2,<3", "matplotlib>=3.8,<4", "pillow>=10,<13", "opencv-python>=4.9,<6", "torch>=2.4,<3", "transformers>=4.46,<5", "huggingface-hub>=0.26,<1"]
-lidar = ["open3d>=0.18,<0.20", "numpy>=1.26,<3", "scipy>=1.11,<2", "shapely>=2,<3", "matplotlib>=3.8,<4", "pillow>=10,<13", "opencv-python>=4.9,<6", "torch>=2.4,<3", "transformers>=4.46,<5", "huggingface-hub>=0.26,<1"]
+lidar = ["open3d>=0.18,<0.20", "numpy>=1.26,<3", "scipy>=1.11,<2", "shapely>=2,<3", "matplotlib>=3.8,<4", "pillow>=10,<13", "opencv-python>=4.9,<6", "torch>=2.4,<3", "transformers>=4.46,<5", "huggingface-hub>=0.26,<1", "pyliblzfse>=0.4.1,<1"]
 openings = ["numpy>=1.26,<3", "scipy>=1.11,<2", "shapely>=2,<3", "matplotlib>=3.8,<4", "pillow>=10,<13", "opencv-python>=4.9,<6", "torch>=2.4,<3", "transformers>=4.46,<5", "huggingface-hub>=0.26,<1"]
 damage = ["numpy>=1.26,<3", "shapely>=2,<3", "pillow>=10,<13", "torch>=2.4,<3", "ultralytics>=8.3.159,<9"]
 ui = ["streamlit>=1.39,<2", "pandas>=2.2,<3"]

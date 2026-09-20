@@ -144,8 +144,17 @@ def _process(prepared: PreparationResult, config: LidarConfig, adapter: LidarCap
             modules_used=modules,
             errors=errors, metadata={"drift_correction": drift, "frame_counts": adapter.counts.model_dump(),
                                    "python_version": platform.python_version(), "open3d_version": o3d.__version__}),
-        metadata={"synthetic": manifest.metadata.get("synthetic", False), "source_to_floor_transform": selected.source_to_floor_transform if selected else None},
+        metadata={"synthetic": manifest.metadata.get("synthetic", False), "source_to_floor_transform": selected.source_to_floor_transform.tolist() if selected and hasattr(selected.source_to_floor_transform, "tolist") else (selected.source_to_floor_transform if selected else None)},
     )
+    if selected and selected.source_to_floor_transform is not None:
+        source_to_floor = np.asarray(selected.source_to_floor_transform, dtype=float)
+        write_json(opening_cache/"frames.json", {"frames": [{
+            "frame_id": f"lidar:{frame.frame_id}",
+            "image_path": f"lidar/opening_frames/{frame.frame_id:06d}.jpg",
+            "depth_path": f"lidar/opening_frames/{frame.frame_id:06d}.npy",
+            "intrinsics": adapter.intrinsics.model_dump(), "camera_to_property": (source_to_floor @ pose).tolist(),
+            "room_id": "room_01", "depth_source": "sensor", "metadata": {}
+            } for frame, pose in zip(frames, opening_poses, strict=True)]})
     from property_scanner.openings.cached import try_process_cached_openings
     try_process_cached_openings(output, result, model_dir, config.opening)
     save_result(result, output/"result.json")

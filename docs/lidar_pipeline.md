@@ -274,5 +274,29 @@ Open3D numeric results can vary slightly across versions/platforms.
 
 Future application adapters implement `LidarCaptureAdapter`, supplying canonical
 manifest/calibration/frame objects. `process_lidar(..., adapter=...)` accepts such
-an adapter; the shipped default is `CanonicalRGBDAdapter`. No undocumented
-Record3D/iOS format is guessed.
+an adapter; the reconstruction default is `CanonicalRGBDAdapter`.
+
+## Record3D stock capture route
+
+The application also accepts a native Record3D `.r3d` archive directly:
+
+```bash
+python run.py --tier lidar --input ./inputs/room_scan.r3d --drift-correction on
+```
+
+`record3d.py` reads the documented `metadata` and `rgbd/<frame>.jpg/.depth`
+entries. It LZFSE-decompresses float32 metric depth, matches frames by numeric
+ID, converts the published quaternion/translation camera poses to 4×4 matrices,
+changes the OpenGL camera basis to the declared OpenCV basis, and records an
+explicit Y-up to Z-up world transform. Registered lower-resolution depth is
+resampled to RGB resolution with nearest-neighbour sampling and stored as
+lossless millimetre PNG. The resulting canonical capture is cached under
+`outputs/_record3d_imports/` and then follows the same validation and
+reconstruction pipeline as every other RGB-D source. Unsupported or malformed
+archives fail rather than receiving guessed calibration.
+
+The converter follows Record3D's [official stream example](https://github.com/marek-simonik/record3d/blob/master/demo-main.py)
+for depth, intrinsics, and pose fields, plus the author's documented
+[pose convention](https://github.com/marek-simonik/record3d/issues/59). It
+supports this native archive layout only; future Record3D format changes must
+be validated before the converter is updated.

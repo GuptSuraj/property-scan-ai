@@ -18,6 +18,11 @@ Measurement uncertainty records one of `benchmark_calibrated`, `multi_view_dispe
 python scripts/build_confidence_profile.py --benchmark benchmark_results.csv --tier lidar
 ```
 
-Without a profile, multi-view MAD or geometric residuals can provide an evidence-based interval. Tier priors are disabled by default and, when enabled, remain explicitly uncalibrated.
+Without a profile, multi-view MAD or geometric residuals can provide an
+evidence-based interval. The standalone confidence class disables tier priors
+by default. Unified CLI/UI finalization enables them so every exported
+measurement has an interval, labels the method `tier_prior_uncalibrated`, and
+adds an `UNCALIBRATED_CONFIDENCE_INTERVALS` warning. A tier-prior interval is
+not a benchmark accuracy claim.
 
 Current open-vocabulary damage detection is not benchmark validated. Fine cracks, reflective or patterned finishes, shadows, concealed conditions, and inaccurate estimated depth remain difficult.

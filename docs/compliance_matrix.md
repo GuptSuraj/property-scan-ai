@@ -4,7 +4,7 @@
 | --- | --- | --- | --- | --- | --- |
 | Photo input | Per-room discovery and reconstruction | `reconstruction/photo` | `photo/` | Complete | Requires COLMAP and depth weights |
 | Video input | MP4/MOV keyframes and metric reconstruction | `reconstruction/video` | `video/` | Complete | Requires FFmpeg, COLMAP, depth weights |
-| LiDAR input | Canonical registered RGB-D | `reconstruction/lidar` | `lidar/` | Complete | Generic format only |
+| LiDAR input | Record3D `.r3d` adapter and canonical registered RGB-D | `reconstruction/lidar` | `lidar/` | Complete | Stock capture route plus generic format |
 | Room/wall dimensions | Shared point-cloud geometry | `geometry` | JSON/CSV | Complete | Real metric geometry required |
 | Floor area/ceiling height | Polygon and plane measurements | `geometry` | JSON/CSV | Complete | Null when unresolved |
 | Whole-property plan | Evidence-based room stitching | `stitching` | PNG/SVG | Partial | Single floor; evidence may be insufficient |
@@ -12,7 +12,7 @@
 | Visible damage | YOLOE + metric surface projection | `damage` | `damage/` | Partial | Optional model; not benchmark validated |
 | Concealed-risk flags | Deterministic explained rules | `damage.detector` | result JSON | Complete | Risk flags, not confirmed hidden damage |
 | Repair scope | Deterministic unpriced actions | `damage.detector` | result JSON | Complete | No costing |
-| Confidence framework | Profile/evidence precedence | `confidence` | JSON/CSV | Complete | Requires benchmark validation |
+| Confidence framework | Profile/evidence precedence | `confidence` | JSON/CSV | Requires benchmark validation | Uncalibrated fallbacks are labeled explicitly |
 | LiDAR drift ON/OFF | Raw and optimized fusion | `reconstruction/lidar` | `ablation/` | Complete | Internal metrics are not accuracy |
 | Unified JSON | Pydantic contract | `schemas` | `result.json` | Complete | Schema validated |
 | PNG/SVG plan | Shared renderer | `rendering` | floorplan files | Complete | Requires valid geometry |

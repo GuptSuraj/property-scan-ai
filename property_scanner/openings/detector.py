@@ -189,8 +189,12 @@ def _fuse_group(group, index, config):
 
 
 def _link_opening(geometry, opening, config):
-    owner = next(room for room in geometry.rooms if any(w.wall_id == opening.wall_id for w in room.walls))
-    wall = next(wall for wall in owner.walls if wall.wall_id == opening.wall_id)
+    owner = next((room for room in geometry.rooms if any(w.wall_id == opening.wall_id for w in room.walls)), None)
+    if owner is None:
+        return
+    wall = next((wall for wall in owner.walls if wall.wall_id == opening.wall_id), None)
+    if wall is None:
+        return
     wall.opening_ids.append(opening.opening_id); owner.opening_ids.append(opening.opening_id)
     direction = np.array([wall.end_point.x-wall.start_point.x, wall.end_point.y-wall.start_point.y], dtype=float)
     direction /= np.linalg.norm(direction)
@@ -203,7 +207,9 @@ def _link_opening(geometry, opening, config):
             if connection.opening_id is not None:
                 continue
             other_id = connection.room_b_id if connection.room_a_id == owner.room_id else connection.room_a_id
-            other = next(room for room in geometry.rooms if room.room_id == other_id)
+            other = next((room for room in geometry.rooms if room.room_id == other_id), None)
+            if other is None:
+                continue
             if other.polygon:
                 polygon = Polygon([(point.x, point.y) for point in other.polygon.points])
                 choices.append((polygon.boundary.distance(Point(midpoint)), connection, other_id))
@@ -291,7 +297,9 @@ class OpeningDetector:
             from matplotlib.patches import Rectangle
             wall_dir = Path(diagnostics_dir)/"wall_projection"; wall_dir.mkdir(parents=True, exist_ok=True)
             for wall_id in sorted({item.wall_id for item in fused}):
-                wall = next(wall for room in geometry.rooms for wall in room.walls if wall.wall_id == wall_id)
+                wall = next((wall for room in geometry.rooms for wall in room.walls if wall.wall_id == wall_id), None)
+                if wall is None:
+                    continue
                 length = wall.length.value if wall.length else float(np.hypot(
                     wall.end_point.x-wall.start_point.x, wall.end_point.y-wall.start_point.y))
                 figure=Figure(figsize=(8,3)); FigureCanvasAgg(figure); axis=figure.subplots()

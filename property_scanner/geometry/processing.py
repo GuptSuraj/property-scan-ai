@@ -45,8 +45,12 @@ def _process(path: Path, config: GeometryConfig, diagnostics_dir: Path | None) -
     if ceiling is None:
         warnings.append(ResultWarning(code="CEILING_UNAVAILABLE", message="No supported ceiling near the cloud top within configured height bounds."))
     else:
-        distance = -(ceiling.normal @ floor.centroid + ceiling.offset) / (ceiling.normal @ floor.normal)
-        height = LengthMeasurement(value=abs(float(distance)), method="plane_separation_along_floor_normal_at_floor_centroid")
+        denominator = float(ceiling.normal @ floor.normal)
+        if abs(denominator) < 1e-6:
+            warnings.append(ResultWarning(code="CEILING_UNAVAILABLE", message="Ceiling plane nearly parallel to floor; height calculation skipped to avoid division by zero."))
+        else:
+            distance = -(ceiling.normal @ floor.centroid + ceiling.offset) / denominator
+            height = LengthMeasurement(value=abs(float(distance)), method="plane_separation_along_floor_normal_at_floor_centroid")
     if polygon is None:
         warnings.append(ResultWarning(code="POLYGON_UNAVAILABLE", message="Wall intersections do not form one unambiguous closed room; observed wall extents retained."))
     structural = [floor, *walls] + ([ceiling] if ceiling is not None else [])

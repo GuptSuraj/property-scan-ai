@@ -24,7 +24,11 @@ def locate_openings(geometry: PropertyGeometry, scene: RenderScene,
         if opening.wall_id is None or opening.width is None or opening.position_along_wall is None:
             warnings.append(ResultWarning(code="OPENING_NOT_POSITIONED", message=f"Opening {opening.opening_id} omitted: host wall, width, or position is unavailable."))
             continue
-        wall, a, b = walls[opening.wall_id]
+        wall_entry = walls.get(opening.wall_id)
+        if wall_entry is None:
+            warnings.append(ResultWarning(code="OPENING_NOT_POSITIONED", message=f"Opening {opening.opening_id} omitted: wall {opening.wall_id} not found in scene."))
+            continue
+        wall, a, b = wall_entry
         length = float(np.linalg.norm(b-a))
         offset, width = opening.position_along_wall.value, opening.width.value
         if width <= 0 or offset+width > length+1e-8:

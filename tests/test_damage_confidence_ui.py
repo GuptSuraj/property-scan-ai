@@ -11,6 +11,7 @@ from property_scanner.confidence.estimator import ConfidenceConfig, ConfidenceEs
 from property_scanner.damage.detector import DamageDetector, build_scope
 from property_scanner.damage.models import DamageConfig, DamageFrame, DamagePrediction
 from property_scanner.damage.vision import DamageVisionModel
+from property_scanner.damage.vision import _damage_type
 from property_scanner.pipeline.finalize import write_measurements_csv
 from property_scanner.schemas.capture import CaptureMetadata
 from property_scanner.schemas.damage import DamageRegion, DamageType
@@ -59,6 +60,13 @@ def test_metric_damage_fusion_scope_and_concealed_rule(tmp_path):
     assert all(item.damage_id==regions[0].damage_id and item.quantity for item in scope)
 
 
+def test_damage_vocabulary_mapping_is_conservative():
+    assert _damage_type("water damage") == DamageType.WATER_DAMAGE
+    assert _damage_type("crack") == DamageType.CRACK
+    assert _damage_type("water bottle") == DamageType.UNKNOWN
+    assert _damage_type("molding") == DamageType.UNKNOWN
+
+
 def result():
     return PropertyScanResult(capture=CaptureMetadata(capture_id="00000000-0000-4000-8000-000000000001",tier="lidar",processing_timestamp=datetime.now(timezone.utc)),
         property=geometry(),processing_info=ProcessingInfo())
@@ -72,6 +80,8 @@ def test_confidence_profile_precedence_and_uncalibrated_label(tmp_path):
     assert scan.property.rooms[0].floor.area.confidence_method==ConfidenceMethod.UNAVAILABLE
     uncal=result(); ConfidenceEstimator(ConfidenceConfig(profile_directory=tmp_path/"missing",allow_tier_prior_uncalibrated=True)).apply(uncal)
     assert uncal.property.rooms[0].walls[0].length.confidence_method==ConfidenceMethod.TIER_PRIOR_UNCALIBRATED
+    assert uncal.property.rooms[0].floor.area.confidence_method==ConfidenceMethod.TIER_PRIOR_UNCALIBRATED
+    assert uncal.property.rooms[0].ceiling.height.lower_bound <= 2.8 <= uncal.property.rooms[0].ceiling.height.upper_bound
 
 
 def test_measurement_csv_and_ui_helpers(tmp_path):

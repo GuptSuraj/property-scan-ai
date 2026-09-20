@@ -20,15 +20,32 @@ class DamageVisionModel(ABC):
 
 
 def _damage_type(label: str) -> DamageType:
-    label = label.lower()
-    if "crack" in label: return DamageType.CRACK
-    if "water damage" in label: return DamageType.WATER_DAMAGE
-    if "water" in label or "moisture" in label: return DamageType.MOISTURE_STAIN
-    if "mold" in label: return DamageType.MOLD
-    if "hole" in label: return DamageType.HOLE
-    if "peel" in label: return DamageType.PEELING_PAINT
-    if "damage" in label: return DamageType.SURFACE_DAMAGE
-    return DamageType.UNKNOWN
+    """Conservatively map only explicit damage vocabulary labels.
+
+    The prompt-free checkpoint contains thousands of labels (including items
+    such as ``water bottle`` and ``molding``), so substring matching would
+    create avoidable phantom damage.
+    """
+    label = " ".join(label.lower().replace("_", " ").split())
+    aliases = {
+        "crack": DamageType.CRACK,
+        "wall crack": DamageType.CRACK,
+        "crack in wall": DamageType.CRACK,
+        "water damage": DamageType.WATER_DAMAGE,
+        "water stain": DamageType.MOISTURE_STAIN,
+        "moisture stain": DamageType.MOISTURE_STAIN,
+        "moisture": DamageType.MOISTURE_STAIN,
+        "stain": DamageType.MOISTURE_STAIN,
+        "mold": DamageType.MOLD,
+        "hole": DamageType.HOLE,
+        "hole in wall": DamageType.HOLE,
+        "peel": DamageType.PEELING_PAINT,
+        "peeling paint": DamageType.PEELING_PAINT,
+        "damage": DamageType.SURFACE_DAMAGE,
+        "damaged wall": DamageType.SURFACE_DAMAGE,
+        "surface damage": DamageType.SURFACE_DAMAGE,
+    }
+    return aliases.get(label, DamageType.UNKNOWN)
 
 
 class UltralyticsYOLEDamageModel(DamageVisionModel):
@@ -49,11 +66,17 @@ class UltralyticsYOLEDamageModel(DamageVisionModel):
         except (OSError, RuntimeError, ValueError) as exc:
             raise ConfigurationError(f"Cannot load cached damage model: {exc}") from exc
         self.config = config
+        names = self.model.names.items() if isinstance(self.model.names, dict) else enumerate(self.model.names)
+        self.damage_classes = {int(index): _damage_type(str(label)) for index, label in names
+                               if _damage_type(str(label)) != DamageType.UNKNOWN}
+        if not self.damage_classes:
+            raise ConfigurationError("Cached damage model has no supported damage vocabulary")
 
     def predict(self, image: Image.Image) -> list[DamagePrediction]:
         try:
             result = self.model.predict(np.asarray(image.convert("RGB")), device=self.device,
-                                        conf=self.config.semantic_min_score, verbose=False)[0]
+                                        conf=self.config.semantic_min_score,
+                                        classes=sorted(self.damage_classes), verbose=False)[0]
             if result.masks is None or result.boxes is None:
                 return []
             masks = result.masks.data.detach().cpu().numpy()
@@ -63,7 +86,7 @@ class UltralyticsYOLEDamageModel(DamageVisionModel):
             for mask, class_id, score in zip(masks, classes, scores):
                 resized = np.asarray(Image.fromarray(mask.astype(np.float32)).resize(
                     image.size, Image.Resampling.BILINEAR)) >= 0.5
-                damage_type = _damage_type(str(result.names[class_id]))
+                damage_type = self.damage_classes.get(int(class_id), DamageType.UNKNOWN)
                 if damage_type != DamageType.UNKNOWN:
                     output.append(DamagePrediction(damage_type, resized, float(score)))
             return output
